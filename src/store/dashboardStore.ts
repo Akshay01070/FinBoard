@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface DashboardActions {
     // Widget actions
-    addWidget: (widget: Omit<Widget, 'id' | 'position'>) => void;
+    addWidget: (widget: Omit<Widget, 'id' | 'position' | 'layout'> & { layout?: Widget['layout'] }) => void;
     removeWidget: (id: string) => void;
     updateWidget: (id: string, updates: Partial<Widget>) => void;
     reorderWidgets: (activeId: string, overId: string) => void;
@@ -37,11 +37,11 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
             ...initialState,
 
             addWidget: (widgetData) => {
-                // Default sizes based on display mode
+                // Uniform height for all widgets (easier arrangement)
                 const defaultLayouts = {
-                    card: { w: 4, h: 2 },    // Small card
-                    table: { w: 6, h: 4 },   // Medium table
-                    chart: { w: 6, h: 3 },   // Medium chart
+                    card: { w: 4, h: 3 },    // Card widget
+                    table: { w: 6, h: 3 },   // Table widget
+                    chart: { w: 6, h: 3 },   // Chart widget
                 };
 
                 const newWidget: Widget = {
