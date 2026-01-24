@@ -11,7 +11,6 @@ import {
     DragEndEvent,
 } from '@dnd-kit/core';
 import {
-    arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
     rectSortingStrategy,
@@ -55,9 +54,20 @@ export default function WidgetGrid() {
             >
                 <div className="widget-grid">
                     {sortedWidgets.map((widget) => (
-                        <Widget key={widget.id} widget={widget} />
+                        <div
+                            key={widget.id}
+                            style={{
+                                gridColumn: `span ${widget.layout?.w || 4}`,
+                                gridRow: `span ${widget.layout?.h || 2}`,
+                            }}
+                        >
+                            <Widget widget={widget} />
+                        </div>
                     ))}
-                    <AddWidgetCard />
+                    {/* Add Widget Card - spans 4 columns, 2 rows */}
+                    <div style={{ gridColumn: 'span 4', gridRow: 'span 2' }}>
+                        <AddWidgetCard />
+                    </div>
                 </div>
             </SortableContext>
         </DndContext>

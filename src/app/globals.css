@@ -58,14 +58,12 @@ body {
 
 /* Diagonal stripe pattern for dark mode */
 .dark body {
-  background: 
-    repeating-linear-gradient(
-      135deg,
+  background:
+    repeating-linear-gradient(135deg,
       transparent,
       transparent 50px,
       rgba(30, 58, 95, 0.1) 50px,
-      rgba(30, 58, 95, 0.1) 100px
-    ),
+      rgba(30, 58, 95, 0.1) 100px),
     linear-gradient(135deg, #0a1628 0%, #162236 100%);
 }
 
@@ -174,18 +172,41 @@ body {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-/* Widget grid */
+/* Widget grid - 12 column layout with fixed row height */
 .widget-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: 100px;
+  /* Fixed row unit */
+  gap: 1rem;
   padding: 1.5rem;
+}
+
+/* Responsive: fewer columns on smaller screens */
+@media (max-width: 1200px) {
+  .widget-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .widget-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .widget-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
 }
 
 /* Loading spinner */
@@ -212,6 +233,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100%;
   min-height: 180px;
   cursor: pointer;
   transition: all 0.2s ease;

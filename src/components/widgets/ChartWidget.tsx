@@ -25,9 +25,13 @@ export default function ChartWidget({ widget, data }: ChartWidgetProps) {
     const chartData = useMemo(() => {
         if (!data) return [];
 
-        // If data is an array, use it directly
+        // If data is an array, use it directly (CoinGecko OHLC returns raw array)
         if (Array.isArray(data)) {
             return data.map((item, index) => {
+                // Handle [timestamp, open, high, low, close] format (CoinGecko OHLC)
+                if (Array.isArray(item) && item.length >= 5) {
+                    return item; // Return as-is for candlestick processing
+                }
                 // Handle [timestamp, value] format (CoinGecko market chart)
                 if (Array.isArray(item) && item.length === 2) {
                     return {
@@ -119,13 +123,29 @@ export default function ChartWidget({ widget, data }: ChartWidgetProps) {
                 });
 
                 // Format data for candlestick (expects {time, open, high, low, close})
-                const formattedData = chartData.map((item, index) => ({
-                    time: (item.time as string) || (item.date as string) || (Math.floor(Date.now() / 1000) + index * 86400),
-                    open: Number(item.open) || Number(item.o) || 0,
-                    high: Number(item.high) || Number(item.h) || 0,
-                    low: Number(item.low) || Number(item.l) || 0,
-                    close: Number(item.close) || Number(item.c) || 0,
-                })).filter(d => d.open > 0 || d.close > 0);
+                // CoinGecko OHLC returns [[timestamp, open, high, low, close], ...]
+                const formattedData = chartData.map((item, index) => {
+                    // Handle CoinGecko OHLC array format [timestamp, open, high, low, close]
+                    if (Array.isArray(item) && item.length >= 5) {
+                        return {
+                            time: Math.floor(Number(item[0]) / 1000) as number, // Convert ms to seconds
+                            open: Number(item[1]),
+                            high: Number(item[2]),
+                            low: Number(item[3]),
+                            close: Number(item[4]),
+                        };
+                    }
+                    // Handle object format
+                    return {
+                        time: (item.time as number) || (Math.floor(Date.now() / 1000) + index * 86400),
+                        open: Number(item.open) || Number(item.o) || 0,
+                        high: Number(item.high) || Number(item.h) || 0,
+                        low: Number(item.low) || Number(item.l) || 0,
+                        close: Number(item.close) || Number(item.c) || 0,
+                    };
+                }).filter(d => d.open > 0 && d.close > 0);
+
+                console.log('Candlestick data:', formattedData.slice(0, 3)); // Debug log
 
                 if (formattedData.length > 0) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any

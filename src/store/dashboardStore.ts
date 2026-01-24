@@ -37,10 +37,18 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
             ...initialState,
 
             addWidget: (widgetData) => {
+                // Default sizes based on display mode
+                const defaultLayouts = {
+                    card: { w: 4, h: 2 },    // Small card
+                    table: { w: 6, h: 4 },   // Medium table
+                    chart: { w: 6, h: 3 },   // Medium chart
+                };
+
                 const newWidget: Widget = {
                     ...widgetData,
                     id: uuidv4(),
                     position: get().widgets.length,
+                    layout: widgetData.layout || defaultLayouts[widgetData.displayMode] || { w: 4, h: 2 },
                 };
                 set((state) => ({
                     widgets: [...state.widgets, newWidget],

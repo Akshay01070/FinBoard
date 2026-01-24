@@ -147,7 +147,7 @@ export default function Widget({ widget }: WidgetProps) {
                 }
             }}
             style={style}
-            className="card overflow-hidden"
+            className="card h-full flex flex-col overflow-hidden"
         >
             {/* Widget Header */}
             <div
@@ -217,7 +217,7 @@ export default function Widget({ widget }: WidgetProps) {
             </div>
 
             {/* Widget Content */}
-            <div className="p-4">
+            <div className="p-4 flex-1 overflow-auto">
                 {renderContent()}
             </div>
 

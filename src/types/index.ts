@@ -11,6 +11,11 @@ export interface FieldConfig {
   format?: 'currency' | 'percentage' | 'number' | 'text';
 }
 
+export interface WidgetLayout {
+  w: number;  // width in grid columns (1-12)
+  h: number;  // height in grid rows
+}
+
 export interface Widget {
   id: string;
   name: string;
@@ -21,6 +26,7 @@ export interface Widget {
   chartInterval?: ChartInterval;
   selectedFields: FieldConfig[];
   position: number;         // Order in the grid
+  layout: WidgetLayout;     // Grid size configuration
   lastUpdated?: string;
   isLoading?: boolean;
   error?: string | null;
