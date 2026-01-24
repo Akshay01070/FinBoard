@@ -8,11 +8,20 @@ export type ProviderCategory = 'crypto' | 'stocks' | 'forex' | 'indian' | 'custo
 export interface ParamDef {
     id: string;
     name: string;
-    type: 'text' | 'select';
+    type: 'text' | 'select' | 'symbol';  // 'symbol' triggers search
     required: boolean;
     default?: string;
     options?: { value: string; label: string }[];
     placeholder?: string;
+}
+
+export interface SearchEndpoint {
+    path: string;
+    queryParam: string;  // e.g., 'q' or 'query' or 'keywords'
+    resultsPath?: string;  // JSON path to results array
+    symbolField: string;  // Field name for symbol in response
+    nameField: string;    // Field name for name in response
+    typeField?: string;   // Optional field for asset type
 }
 
 export interface ApiEndpoint {
@@ -38,6 +47,11 @@ export interface ApiProvider {
     requiresApiKey: boolean;
     envKeyName?: string;
     docsUrl?: string;
+    searchEndpoint?: SearchEndpoint;  // Symbol search config
+    // Widget type compatibility
+    supportsCard: boolean;
+    supportsTable: boolean;
+    supportsChart: boolean;
 }
 
 // Provider configurations
@@ -55,6 +69,14 @@ export const providers: ApiProvider[] = [
         requiresApiKey: false,
         envKeyName: 'COINGECKO_API_KEY',
         docsUrl: 'https://www.coingecko.com/api/documentation',
+        searchEndpoint: {
+            path: '/search',
+            queryParam: 'query',
+            resultsPath: 'coins',
+            symbolField: 'id',  // Use 'id' (e.g. 'bitcoin') instead of 'symbol' (e.g. 'btc') for API calls
+            nameField: 'name',
+            typeField: 'market_cap_rank',
+        },
         endpoints: [
             {
                 id: 'simple-price',
@@ -64,25 +86,36 @@ export const providers: ApiProvider[] = [
                 params: [
                     {
                         id: 'ids',
-                        name: 'Coin IDs',
-                        type: 'text',
+                        name: 'Coin',
+                        type: 'symbol',
                         required: true,
-                        default: 'bitcoin,ethereum',
-                        placeholder: 'bitcoin,ethereum,solana',
+                        placeholder: 'Search for a coin...',
                     },
                     {
                         id: 'vs_currencies',
-                        name: 'Currencies',
-                        type: 'text',
+                        name: 'Currency',
+                        type: 'select',
                         required: true,
-                        default: 'usd',
-                        placeholder: 'usd,eur,inr',
+                        default: 'inr',
+                        options: [
+                            { value: 'usd', label: 'USD' },
+                            { value: 'eur', label: 'EUR' },
+                            { value: 'inr', label: 'INR' },
+                        ],
+                    },
+                    {
+                        id: 'include_24hr_change',
+                        name: 'Include 24h Change',
+                        type: 'select',
+                        required: false,
+                        default: 'true',
+                        options: [
+                            { value: 'true', label: 'Yes' },
+                            { value: 'false', label: 'No' },
+                        ],
                     },
                 ],
-                defaultFields: [
-                    { path: 'bitcoin.usd', label: 'BTC Price', format: 'currency' },
-                    { path: 'ethereum.usd', label: 'ETH Price', format: 'currency' },
-                ],
+                defaultFields: [],
                 displayMode: 'card',
                 defaultLayout: { w: 4, h: 3 },
             },
@@ -136,14 +169,9 @@ export const providers: ApiProvider[] = [
                     {
                         id: 'coinId',
                         name: 'Coin',
-                        type: 'select',
+                        type: 'symbol',
                         required: true,
-                        default: 'bitcoin',
-                        options: [
-                            { value: 'bitcoin', label: 'Bitcoin' },
-                            { value: 'ethereum', label: 'Ethereum' },
-                            { value: 'solana', label: 'Solana' },
-                        ],
+                        placeholder: 'Search for a coin...',
                     },
                     {
                         id: 'vs_currency',
@@ -185,13 +213,9 @@ export const providers: ApiProvider[] = [
                     {
                         id: 'coinId',
                         name: 'Coin',
-                        type: 'select',
+                        type: 'symbol',
                         required: true,
-                        default: 'bitcoin',
-                        options: [
-                            { value: 'bitcoin', label: 'Bitcoin' },
-                            { value: 'ethereum', label: 'Ethereum' },
-                        ],
+                        placeholder: 'Search for a coin...',
                     },
                     {
                         id: 'vs_currency',
@@ -222,6 +246,9 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 6, h: 3 },
             },
         ],
+        supportsCard: true,
+        supportsTable: true,
+        supportsChart: true,
     },
 
     // ============================================
@@ -237,6 +264,14 @@ export const providers: ApiProvider[] = [
         requiresApiKey: true,
         envKeyName: 'ALPHA_VANTAGE_API_KEY',
         docsUrl: 'https://www.alphavantage.co/documentation/',
+        searchEndpoint: {
+            path: '',
+            queryParam: 'keywords',
+            resultsPath: 'bestMatches',
+            symbolField: '1. symbol',
+            nameField: '2. name',
+            typeField: '3. type',
+        },
         endpoints: [
             {
                 id: 'global-quote',
@@ -253,11 +288,10 @@ export const providers: ApiProvider[] = [
                     },
                     {
                         id: 'symbol',
-                        name: 'Symbol',
-                        type: 'text',
+                        name: 'Stock Symbol',
+                        type: 'symbol',
                         required: true,
-                        placeholder: 'AAPL, MSFT, GOOGL',
-                        default: 'AAPL',
+                        placeholder: 'Search for a stock...',
                     },
                 ],
                 defaultFields: [
@@ -307,6 +341,9 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 4, h: 3 },
             },
         ],
+        supportsCard: true,
+        supportsTable: false,
+        supportsChart: true,
     },
 
     // ============================================
@@ -322,6 +359,14 @@ export const providers: ApiProvider[] = [
         requiresApiKey: true,
         envKeyName: 'FINNHUB_API_KEY',
         docsUrl: 'https://finnhub.io/docs/api',
+        searchEndpoint: {
+            path: '/search',
+            queryParam: 'q',
+            resultsPath: 'result',
+            symbolField: 'symbol',
+            nameField: 'description',
+            typeField: 'type',
+        },
         endpoints: [
             {
                 id: 'quote',
@@ -331,11 +376,10 @@ export const providers: ApiProvider[] = [
                 params: [
                     {
                         id: 'symbol',
-                        name: 'Symbol',
-                        type: 'text',
+                        name: 'Stock Symbol',
+                        type: 'symbol',
                         required: true,
-                        placeholder: 'AAPL, MSFT, TSLA',
-                        default: 'AAPL',
+                        placeholder: 'Search for a stock...',
                     },
                 ],
                 defaultFields: [
@@ -355,11 +399,10 @@ export const providers: ApiProvider[] = [
                 params: [
                     {
                         id: 'symbol',
-                        name: 'Symbol',
-                        type: 'text',
+                        name: 'Stock Symbol',
+                        type: 'symbol',
                         required: true,
-                        placeholder: 'AAPL',
-                        default: 'AAPL',
+                        placeholder: 'Search for a stock...',
                     },
                 ],
                 defaultFields: [
@@ -399,6 +442,9 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 6, h: 3 },
             },
         ],
+        supportsCard: true,
+        supportsTable: true,
+        supportsChart: true,
     },
 
     // ============================================
@@ -414,6 +460,13 @@ export const providers: ApiProvider[] = [
         requiresApiKey: true,
         envKeyName: 'INDIANAPI_API_KEY',
         docsUrl: 'https://indianapi.in/docs/stock',
+        searchEndpoint: {
+            path: '/search',
+            queryParam: 'name',
+            resultsPath: 'results',
+            symbolField: 'symbol',
+            nameField: 'name',
+        },
         endpoints: [
             {
                 id: 'stock-price',
@@ -423,11 +476,10 @@ export const providers: ApiProvider[] = [
                 params: [
                     {
                         id: 'name',
-                        name: 'Stock Name',
-                        type: 'text',
+                        name: 'Stock',
+                        type: 'symbol',
                         required: true,
-                        placeholder: 'TCS, RELIANCE, INFY',
-                        default: 'TCS',
+                        placeholder: 'Search for a stock...',
                     },
                 ],
                 defaultFields: [
@@ -467,6 +519,9 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 6, h: 3 },
             },
         ],
+        supportsCard: true,
+        supportsTable: true,
+        supportsChart: false,
     },
 
     // ============================================
@@ -500,6 +555,9 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 4, h: 3 },
             },
         ],
+        supportsCard: true,
+        supportsTable: true,
+        supportsChart: true,
     },
 ];
 

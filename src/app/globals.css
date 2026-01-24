@@ -50,21 +50,15 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: var(--bg-primary) !important;
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   min-height: 100vh;
 }
 
-/* Diagonal stripe pattern for dark mode */
+/* Dark mode solid background */
 .dark body {
-  background:
-    repeating-linear-gradient(135deg,
-      transparent,
-      transparent 50px,
-      rgba(30, 58, 95, 0.1) 50px,
-      rgba(30, 58, 95, 0.1) 100px),
-    linear-gradient(135deg, #0a1628 0%, #162236 100%);
+  background: #0a1628 !important;
 }
 
 /* Scrollbar styling */
@@ -207,6 +201,36 @@ body {
     grid-template-columns: 1fr;
     grid-auto-rows: auto;
   }
+}
+
+/* Widget card base styles */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  height: 100%;
+  width: 100%;
+}
+
+/* Add Widget Card - matches widget card size and style */
+.add-widget-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  min-height: 300px;
+  background: var(--bg-card);
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-widget-card:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
 }
 
 /* Loading spinner */

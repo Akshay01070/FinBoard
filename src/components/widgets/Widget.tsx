@@ -55,15 +55,151 @@ export default function Widget({ widget }: WidgetProps) {
         if (!widget.apiUrl) return;
 
         setWidgetLoading(widget.id, true);
-        const { data, error } = await fetchApiData(widget.apiUrl);
 
-        if (error) {
-            setWidgetError(widget.id, error);
-        } else {
-            setWidgetData(widget.id, data);
+        try {
+            // Build base params
+            let params = { ...widget.endpointParams };
+
+            // ========================================
+            // COINGECKO: Supports batch requests (multiple ids in one call)
+            // ========================================
+            if (widget.providerId === 'coingecko' && widget.cardStyle === 'watchlist' && widget.watchlistItems && widget.watchlistItems.length > 0) {
+                const ids = widget.watchlistItems.map(item => item.symbol.toLowerCase()).join(',');
+                params = {
+                    ...params,
+                    ids,
+                    vs_currencies: params?.vs_currencies || 'inr',
+                    include_24hr_change: 'true'
+                };
+
+                const { data, error } = await fetchApiData(widget.apiUrl, {
+                    providerId: widget.providerId,
+                    endpointId: widget.endpointId,
+                    params,
+                });
+
+                if (error) {
+                    setWidgetError(widget.id, error);
+                } else {
+                    setWidgetData(widget.id, data);
+                }
+                setWidgetLoading(widget.id, false);
+                return;
+            }
+
+            // ========================================
+            // FINNHUB & ALPHAVANTAGE: Single symbol per request
+            // Need to make multiple parallel calls for watchlists
+            // ========================================
+            if ((widget.providerId === 'finnhub' || widget.providerId === 'alphavantage') &&
+                widget.cardStyle === 'watchlist' &&
+                widget.watchlistItems &&
+                widget.watchlistItems.length > 0) {
+
+                // Make parallel API calls for each symbol
+                const results = await Promise.all(
+                    widget.watchlistItems.map(async (item) => {
+                        const symbolParams = {
+                            ...params,
+                            symbol: item.symbol,
+                        };
+
+                        const { data, error } = await fetchApiData(widget.apiUrl, {
+                            providerId: widget.providerId,
+                            endpointId: widget.endpointId,
+                            params: symbolParams,
+                        });
+
+                        return {
+                            symbol: item.symbol,
+                            name: item.name,
+                            data,
+                            error
+                        };
+                    })
+                );
+
+                // Combine results into a single object keyed by symbol
+                const combinedData: Record<string, unknown> = {};
+                for (const result of results) {
+                    if (!result.error && result.data) {
+                        combinedData[result.symbol] = {
+                            ...result.data as Record<string, unknown>,
+                            _name: result.name,
+                            _symbol: result.symbol
+                        };
+                    }
+                }
+
+                setWidgetData(widget.id, combinedData);
+                setWidgetLoading(widget.id, false);
+                return;
+            }
+
+            // ========================================
+            // INDIANAPI: Uses 'name' param instead of 'symbol'
+            // ========================================
+            if (widget.providerId === 'indianapi' && widget.watchlistItems && widget.watchlistItems.length > 0) {
+                // Make parallel API calls for each stock
+                const results = await Promise.all(
+                    widget.watchlistItems.map(async (item) => {
+                        const nameParams = {
+                            ...params,
+                            name: item.name || item.symbol, // IndianAPI uses 'name' param
+                        };
+
+                        const { data, error } = await fetchApiData(widget.apiUrl, {
+                            providerId: widget.providerId,
+                            endpointId: widget.endpointId,
+                            params: nameParams,
+                        });
+
+                        return {
+                            symbol: item.symbol,
+                            name: item.name,
+                            data,
+                            error
+                        };
+                    })
+                );
+
+                // Combine results
+                const combinedData: Record<string, unknown> = {};
+                for (const result of results) {
+                    if (!result.error && result.data) {
+                        combinedData[result.symbol] = {
+                            ...result.data as Record<string, unknown>,
+                            _name: result.name,
+                            _symbol: result.symbol
+                        };
+                    }
+                }
+
+                setWidgetData(widget.id, combinedData);
+                setWidgetLoading(widget.id, false);
+                return;
+            }
+
+            // ========================================
+            // DEFAULT: Single API call for non-watchlist widgets
+            // ========================================
+            const { data, error } = await fetchApiData(widget.apiUrl, {
+                providerId: widget.providerId,
+                endpointId: widget.endpointId,
+                params,
+            });
+
+            if (error) {
+                setWidgetError(widget.id, error);
+            } else {
+                setWidgetData(widget.id, data);
+            }
+        } catch (err) {
+            setWidgetError(widget.id, err instanceof Error ? err.message : 'Fetch failed');
         }
+
         setWidgetLoading(widget.id, false);
-    }, [widget.id, widget.apiUrl, setWidgetData, setWidgetLoading, setWidgetError]);
+    }, [widget.id, widget.apiUrl, widget.providerId, widget.endpointId, widget.endpointParams, widget.cardStyle, widget.watchlistItems, setWidgetData, setWidgetLoading, setWidgetError]);
 
     // Initial fetch and refresh interval
     useEffect(() => {

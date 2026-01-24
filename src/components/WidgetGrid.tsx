@@ -64,8 +64,14 @@ export default function WidgetGrid() {
                             <Widget widget={widget} />
                         </div>
                     ))}
-                    {/* Add Widget Card - spans 4 columns, 3 rows (same height) */}
-                    <div style={{ gridColumn: 'span 4', gridRow: 'span 3' }}>
+                    {/* Add Widget Card - same size as card widgets (4 cols, 3 rows) */}
+                    <div
+                        style={{
+                            gridColumn: 'span 4',
+                            gridRow: 'span 3',
+                            minHeight: '300px'
+                        }}
+                    >
                         <AddWidgetCard />
                     </div>
                 </div>

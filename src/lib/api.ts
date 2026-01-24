@@ -35,36 +35,60 @@ export async function testApiConnection(url: string): Promise<ApiTestResult> {
 
 /**
  * Fetches data from an API with caching
+ * Uses /api/data for provider-based requests (with API key injection)
+ * Uses /api/proxy for custom URLs
  */
 export async function fetchApiData(
     url: string,
     options: {
         useCache?: boolean;
         cacheTTL?: number;
+        providerId?: string;
+        endpointId?: string;
+        params?: Record<string, string>;
     } = {}
 ): Promise<{ data: unknown; fromCache: boolean; error?: string }> {
-    const { useCache = true, cacheTTL = CACHE_TTL } = options;
+    const { useCache = true, cacheTTL = CACHE_TTL, providerId, endpointId, params } = options;
 
     // Check cache first
+    const cacheKey = providerId ? `${providerId}:${endpointId}:${JSON.stringify(params)}` : url;
     if (useCache) {
-        const cached = API_CACHE.get(url);
+        const cached = API_CACHE.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < cacheTTL) {
             return { data: cached.data, fromCache: true };
         }
     }
 
     try {
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
+        let response;
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        // Use /api/data for provider-based requests (adds API keys)
+        if (providerId && providerId !== 'custom' && endpointId) {
+            response = await fetch('/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    providerId,
+                    endpointId,
+                    params: params || {},
+                }),
+            });
+        } else {
+            // Use /api/proxy for custom URLs
+            const proxyUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+            response = await fetch(proxyUrl);
         }
 
-        const data = await response.json();
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        const data = result.data || result;
 
         // Update cache
-        API_CACHE.set(url, { data, timestamp: Date.now() });
+        API_CACHE.set(cacheKey, { data, timestamp: Date.now() });
 
         return { data, fromCache: false };
     } catch (error) {

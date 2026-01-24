@@ -2,8 +2,9 @@
 
 export type DisplayMode = 'card' | 'table' | 'chart';
 export type ChartType = 'line' | 'candlestick';
-export type ChartInterval = '1D' | '1W' | '1M';
+export type ChartInterval = '1D' | '1W' | '1M' | '1Y';
 export type Theme = 'light' | 'dark';
+export type CardStyle = 'watchlist' | 'market-gainers' | 'financial-data';
 
 export interface FieldConfig {
   path: string;       // JSON path like "data.rates.USD"
@@ -16,14 +17,21 @@ export interface WidgetLayout {
   h: number;  // height in grid rows
 }
 
+export interface WatchlistItem {
+  symbol: string;
+  name: string;
+}
+
 export interface Widget {
   id: string;
   name: string;
   apiUrl: string;
   refreshInterval: number;  // in seconds
   displayMode: DisplayMode;
+  cardStyle?: CardStyle;            // For card widgets
   chartType?: ChartType;
   chartInterval?: ChartInterval;
+  watchlistItems?: WatchlistItem[]; // For watchlist card style
   selectedFields: FieldConfig[];
   position: number;         // Order in the grid
   layout: WidgetLayout;     // Grid size configuration
@@ -31,6 +39,9 @@ export interface Widget {
   isLoading?: boolean;
   error?: string | null;
   cachedData?: unknown;
+  providerId?: string;      // Track which provider was used
+  endpointId?: string;      // Track which endpoint was used
+  endpointParams?: Record<string, string>; // Params for API call
 }
 
 export interface DashboardState {

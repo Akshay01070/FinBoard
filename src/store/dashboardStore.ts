@@ -38,10 +38,11 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
 
             addWidget: (widgetData) => {
                 // Uniform height for all widgets (easier arrangement)
+                // Chart/Table = 8 cols (same as 2 cards), Card = 4 cols
                 const defaultLayouts = {
-                    card: { w: 4, h: 3 },    // Card widget
-                    table: { w: 6, h: 3 },   // Table widget
-                    chart: { w: 6, h: 3 },   // Chart widget
+                    card: { w: 4, h: 3 },    // Card widget - 4 columns
+                    table: { w: 8, h: 3 },   // Table widget - 8 columns (2 cards wide)
+                    chart: { w: 8, h: 3 },   // Chart widget - 8 columns (2 cards wide)
                 };
 
                 const newWidget: Widget = {
@@ -137,7 +138,9 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
         }),
         {
             name: 'finboard-storage',
-            partialize: (state) => ({
+            version: 2, // Bump version to trigger migration
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            partialize: (state): any => ({
                 widgets: state.widgets.map((w) => ({
                     ...w,
                     isLoading: false,
@@ -146,6 +149,24 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
                 })),
                 theme: state.theme,
             }),
+            // Migration to fix widget layouts
+            migrate: (persistedState, version) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const state = persistedState as any;
+                if (version < 2 && state.widgets) {
+                    // Fix layouts for chart/table widgets that have wrong width
+                    const correctLayouts: Record<string, { w: number; h: number }> = {
+                        card: { w: 4, h: 3 },
+                        table: { w: 8, h: 3 },
+                        chart: { w: 8, h: 3 },
+                    };
+                    state.widgets = state.widgets.map((w: Widget) => ({
+                        ...w,
+                        layout: correctLayouts[w.displayMode] || w.layout || { w: 4, h: 3 },
+                    }));
+                }
+                return state as DashboardState;
+            },
         }
     )
 );
