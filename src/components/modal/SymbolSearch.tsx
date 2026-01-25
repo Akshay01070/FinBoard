@@ -93,23 +93,28 @@ export default function SymbolSearch({
 
     // Keyboard navigation
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (!isOpen || results.length === 0) return;
-
         switch (e.key) {
             case 'ArrowDown':
+                if (!isOpen || results.length === 0) return;
                 e.preventDefault();
                 setSelectedIndex((prev) =>
                     prev < results.length - 1 ? prev + 1 : prev
                 );
                 break;
             case 'ArrowUp':
+                if (!isOpen || results.length === 0) return;
                 e.preventDefault();
                 setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
                 break;
             case 'Enter':
                 e.preventDefault();
-                if (selectedIndex >= 0 && selectedIndex < results.length) {
+                // If we have results and one is selected, use it
+                if (results.length > 0 && selectedIndex >= 0 && selectedIndex < results.length) {
                     handleSelect(results[selectedIndex]);
+                }
+                // Otherwise, if we have a query, add it directly (manual add)
+                else if (query.trim().length >= 2) {
+                    handleSelect({ symbol: query.toUpperCase().trim(), name: query.toUpperCase().trim() });
                 }
                 break;
             case 'Escape':
@@ -224,10 +229,22 @@ export default function SymbolSearch({
                 </div>
             )}
 
-            {/* No results */}
+            {/* No results - Allow manual addition */}
             {isOpen && query.length >= 2 && !isLoading && results.length === 0 && !error && (
-                <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] p-3 text-center text-sm text-[var(--text-muted)]">
-                    No results found for &quot;{query}&quot;
+                <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border-color)] bg-[var(--bg-card)] p-3 text-center">
+                    <p className="mb-2 text-sm text-[var(--text-muted)]">
+                        No search results found for &quot;{query}&quot;
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => handleSelect({ symbol: query.toUpperCase(), name: query.toUpperCase() })}
+                        className="rounded-full bg-[var(--accent-primary)] px-4 py-1.5 text-xs font-medium text-white hover:opacity-90 active:scale-95 transition-all"
+                    >
+                        Use &quot;{query.toUpperCase()}&quot; as Symbol
+                    </button>
+                    <p className="mt-2 text-[10px] text-[var(--text-muted)] opacity-70">
+                        Force add this symbol if you know it&apos;s correct
+                    </p>
                 </div>
             )}
         </div>

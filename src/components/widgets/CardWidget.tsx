@@ -39,20 +39,17 @@ const formatChange = (value: number | string): { text: string; isPositive: boole
     };
 };
 
-// Watchlist Item Row Component
-function WatchlistRow({
-    name,
-    symbol,
-    price,
-    change,
-    index
-}: {
+interface WatchlistRowProps {
     name: string;
     symbol: string;
     price: number;
     change: number;
     index: number;
-}) {
+    currency?: string;
+}
+
+// Watchlist Item Row Component
+function WatchlistRow({ name, symbol, price, change, index, currency }: WatchlistRowProps) {
     const { text: changeText, isPositive } = formatChange(change);
 
     // Generate color based on index for variety
@@ -80,7 +77,9 @@ function WatchlistRow({
             </div>
             {/* Price and change */}
             <div className="text-right">
-                <p className="font-semibold text-[var(--text-primary)]">{formatPrice(price)}</p>
+                <p className="font-semibold text-[var(--text-primary)]">
+                    {formatValue(price, 'currency', { currency })}
+                </p>
                 <p className={`text-sm ${isPositive ? 'text-emerald-400' : 'text-pink-400'}`}>
                     {changeText}
                 </p>
@@ -204,10 +203,21 @@ function WatchlistCard({ widget, data }: CardWidgetProps) {
                     const changeStr = gq['10. change percent'] || '0';
                     change = parseFloat(changeStr.replace('%', '')) || 0;
                 }
-                // IndianAPI format: { currentPrice: 1234, percentChange: 1.5 }
+                // IndianAPI format: { currentPrice: { BSE: "3162.50", NSE: "3165.00" }, percentChange: "0.30" }
                 else if ('currentPrice' in itemData) {
-                    price = (itemData.currentPrice || 0) as number;
-                    change = (itemData.percentChange || 0) as number;
+                    const currentPrice = itemData.currentPrice;
+                    // Handle nested price object with BSE/NSE values
+                    if (typeof currentPrice === 'object' && currentPrice !== null) {
+                        const priceObj = currentPrice as Record<string, string | number>;
+                        // Try NSE first, then BSE
+                        const priceValue = priceObj.NSE || priceObj.BSE || 0;
+                        price = typeof priceValue === 'string' ? parseFloat(priceValue) : priceValue;
+                    } else {
+                        price = typeof currentPrice === 'string' ? parseFloat(currentPrice) : (currentPrice || 0) as number;
+                    }
+                    // percentChange may be a string like "0.30"
+                    const pctChange = itemData.percentChange;
+                    change = typeof pctChange === 'string' ? parseFloat(pctChange) : (pctChange || 0) as number;
                 }
 
                 // Get display name from data or item
@@ -228,32 +238,87 @@ function WatchlistCard({ widget, data }: CardWidgetProps) {
     );
 }
 
+// Helper to determine widget currency
+const getCurrency = (widget: WidgetConfig): string => {
+    // 1. Check endpoint params (e.g. CoinGecko vs_currency)
+    if (widget.endpointParams?.vs_currency) {
+        return widget.endpointParams.vs_currency.toUpperCase();
+    }
+    // 2. Check provider default (IndianAPI usually INR)
+    if (widget.providerId === 'indianapi') {
+        return 'INR';
+    }
+    // 3. Fallback to USD (CoinGecko defaults, Finnhub, etc)
+    return 'USD';
+};
+
 // Market Gainers Card (top movers)
 function MarketGainersCard({ widget, data }: CardWidgetProps) {
-    // Try to extract top gainers from data
-    // CoinGecko trending or markets endpoint returns array
-    const items = Array.isArray(data) ? data.slice(0, 5) : [];
+    const currency = getCurrency(widget);
 
-    if (items.length > 0) {
+    // Normalize data from different provider formats
+    interface GainerItem {
+        name: string;
+        symbol: string;
+        price: number;
+        change: number;
+    }
+
+    let gainers: GainerItem[] = [];
+
+    // CoinGecko format: Array with current_price, price_change_percentage_24h
+    if (Array.isArray(data)) {
+        gainers = data.map((item: Record<string, unknown>) => ({
+            name: (item.name || item.id || 'Unknown') as string,
+            symbol: (item.symbol || 'N/A') as string,
+            price: (item.current_price || item.price || 0) as number,
+            change: (item.price_change_percentage_24h || item.change || 0) as number,
+        }));
+    }
+    // IndianAPI format: { trending_stocks: { top_gainers: [...] } }
+    else if (data && typeof data === 'object') {
+        const dataObj = data as Record<string, unknown>;
+        const trendingStocks = dataObj.trending_stocks as Record<string, unknown> | undefined;
+        const topGainers = (trendingStocks?.top_gainers || dataObj.top_gainers || dataObj.topGainers) as Record<string, unknown>[] | undefined;
+
+        if (topGainers && Array.isArray(topGainers)) {
+            gainers = topGainers.map((item: Record<string, unknown>) => {
+                // IndianAPI uses snake_case in trending endpoint
+                // Fields from verification: price, percent_change, net_change, ltp
+                const ltp = item.ltp || item.price || item.lastPrice || item.close || 0;
+                // Use percent_change for sorting (it's what users expect for 'gainers')
+                const pctChange = item.percent_change || item.percentChange || item.net_change || item.netChange || 0;
+
+                return {
+                    name: (item.company_name || item.companyName || item.symbol || 'Unknown') as string,
+                    symbol: (item.symbol || 'N/A') as string,
+                    price: typeof ltp === 'string' ? parseFloat(ltp) : ltp as number,
+                    change: typeof pctChange === 'string' ? parseFloat(pctChange) : pctChange as number,
+                };
+            });
+        }
+    }
+
+    // Sort by percentage change (descending), filter out losers, and take top 5
+    const topGainers = gainers
+        .filter(item => item.change > 0) // Only show actual gainers
+        .sort((a, b) => b.change - a.change)
+        .slice(0, 5);
+
+    if (topGainers.length > 0) {
         return (
             <div className="space-y-2">
-                {items.map((item: Record<string, unknown>, index: number) => {
-                    const name = (item.name || item.id || `Item ${index + 1}`) as string;
-                    const symbol = (item.symbol || name.substring(0, 4)) as string;
-                    const price = (item.current_price || item.price || 0) as number;
-                    const change = (item.price_change_percentage_24h || item.change || 0) as number;
-
-                    return (
-                        <WatchlistRow
-                            key={symbol + index}
-                            name={name}
-                            symbol={symbol.toUpperCase()}
-                            price={price}
-                            change={change}
-                            index={index}
-                        />
-                    );
-                })}
+                {topGainers.map((item, index) => (
+                    <WatchlistRow
+                        key={item.symbol + index}
+                        name={item.name}
+                        symbol={item.symbol.toUpperCase()}
+                        price={item.price}
+                        change={item.change}
+                        index={index}
+                        currency={currency}
+                    />
+                ))}
             </div>
         );
     }
@@ -261,7 +326,7 @@ function MarketGainersCard({ widget, data }: CardWidgetProps) {
     // Fallback
     return (
         <div className="flex h-32 items-center justify-center text-[var(--text-muted)]">
-            No gainers data
+            No gainers data available
         </div>
     );
 }

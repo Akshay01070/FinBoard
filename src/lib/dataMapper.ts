@@ -85,7 +85,8 @@ export function getValueByPath(obj: unknown, path: string): unknown {
  */
 export function formatValue(
     value: unknown,
-    format?: 'currency' | 'percentage' | 'number' | 'text'
+    format?: 'currency' | 'percentage' | 'number' | 'text',
+    options?: { currency?: string }
 ): string {
     if (value === null || value === undefined) {
         return '-';
@@ -98,9 +99,9 @@ export function formatValue(
             if (typeof numValue === 'number' && !isNaN(numValue)) {
                 return new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: options?.currency || 'USD',
                     minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                    maximumFractionDigits: 6, // Allow up to 6 decimals for crypto
                 }).format(numValue);
             }
             return String(value);

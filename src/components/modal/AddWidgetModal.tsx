@@ -69,7 +69,13 @@ export default function AddWidgetModal() {
     // Filter providers by widget type compatibility
     const availableProviders = providers.filter(p => {
         if (p.id === 'custom') return true; // Always show custom
-        if (widgetType === 'card') return p.supportsCard;
+        if (widgetType === 'card') {
+            // Filter based on card style
+            if (cardStyle === 'watchlist') return p.supportsCard.watchlist;
+            if (cardStyle === 'market-gainers') return p.supportsCard.marketGainers;
+            if (cardStyle === 'financial-data') return p.supportsCard.financialData;
+            return true;
+        }
         if (widgetType === 'table') return p.supportsTable;
         if (widgetType === 'chart') return p.supportsChart;
         return true;
@@ -95,12 +101,20 @@ export default function AddWidgetModal() {
         }
     }, [editingWidget, isModalOpen]);
 
-    // Auto-select first endpoint when provider changes
+    // Auto-select endpoint based on provider and card style
     useEffect(() => {
         if (selectedProvider && selectedProvider.endpoints.length > 0) {
-            setSelectedEndpointId(selectedProvider.endpoints[0].id);
+            let targetEndpointId = selectedProvider.endpoints[0].id;
+
+            // Select specific endpoints for Market Gainers
+            if (cardStyle === 'market-gainers') {
+                if (selectedProvider.id === 'coingecko') targetEndpointId = 'coins-markets';
+                if (selectedProvider.id === 'indianapi') targetEndpointId = 'trending';
+            }
+
+            setSelectedEndpointId(targetEndpointId);
         }
-    }, [selectedProviderId, selectedProvider]);
+    }, [selectedProviderId, selectedProvider, cardStyle]);
 
     // Set default params and build URL when endpoint changes
     useEffect(() => {
@@ -111,6 +125,15 @@ export default function AddWidgetModal() {
                     defaultParams[param.id] = param.default;
                 }
             });
+
+            // Override defaults for Market Gainers -> Force True Top Gainers
+            if (cardStyle === 'market-gainers') {
+                if (selectedProvider.id === 'coingecko' && selectedEndpoint.id === 'coins-markets') {
+                    // Sort by 24h % change descending to get actual top gainers
+                    defaultParams['order'] = 'price_change_percentage_24h_desc';
+                }
+            }
+
             setEndpointParams(defaultParams);
             setApiTestResult(null);
 

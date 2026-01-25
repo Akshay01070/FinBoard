@@ -49,7 +49,11 @@ export interface ApiProvider {
     docsUrl?: string;
     searchEndpoint?: SearchEndpoint;  // Symbol search config
     // Widget type compatibility
-    supportsCard: boolean;
+    supportsCard: {
+        watchlist: boolean;
+        marketGainers: boolean;
+        financialData: boolean;
+    };
     supportsTable: boolean;
     supportsChart: boolean;
 }
@@ -246,7 +250,11 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 6, h: 3 },
             },
         ],
-        supportsCard: true,
+        supportsCard: {
+            watchlist: true,
+            marketGainers: true,
+            financialData: true,
+        },
         supportsTable: true,
         supportsChart: true,
     },
@@ -341,7 +349,11 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 4, h: 3 },
             },
         ],
-        supportsCard: true,
+        supportsCard: {
+            watchlist: true,
+            marketGainers: false,
+            financialData: true,
+        },
         supportsTable: false,
         supportsChart: true,
     },
@@ -442,7 +454,11 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 6, h: 3 },
             },
         ],
-        supportsCard: true,
+        supportsCard: {
+            watchlist: true,
+            marketGainers: false,
+            financialData: true,
+        },
         supportsTable: true,
         supportsChart: true,
     },
@@ -462,7 +478,7 @@ export const providers: ApiProvider[] = [
         docsUrl: 'https://indianapi.in/docs/stock',
         searchEndpoint: {
             path: '/search',
-            queryParam: 'name',
+            queryParam: 'query',
             resultsPath: 'results',
             symbolField: 'symbol',
             nameField: 'name',
@@ -479,6 +495,7 @@ export const providers: ApiProvider[] = [
                         name: 'Stock',
                         type: 'symbol',
                         required: true,
+                        default: 'RELIANCE',
                         placeholder: 'Search for a stock...',
                     },
                 ],
@@ -519,7 +536,11 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 6, h: 3 },
             },
         ],
-        supportsCard: true,
+        supportsCard: {
+            watchlist: true,
+            marketGainers: true,
+            financialData: true,
+        },
         supportsTable: true,
         supportsChart: false,
     },
@@ -555,7 +576,11 @@ export const providers: ApiProvider[] = [
                 defaultLayout: { w: 4, h: 3 },
             },
         ],
-        supportsCard: true,
+        supportsCard: {
+            watchlist: true,
+            marketGainers: false,
+            financialData: true,
+        },
         supportsTable: true,
         supportsChart: true,
     },
