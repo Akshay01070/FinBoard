@@ -56,20 +56,20 @@ export default function WidgetGrid() {
                     {sortedWidgets.map((widget) => (
                         <div
                             key={widget.id}
+                            className="widget-item"
                             style={{
                                 gridColumn: `span ${widget.layout?.w || 4}`,
-                                gridRow: 'span 3',  // Force uniform height
                             }}
                         >
                             <Widget widget={widget} />
                         </div>
                     ))}
-                    {/* Add Widget Card - same size as card widgets (4 cols, 3 rows) */}
+                    {/* Add Widget Card - same size as card widgets (4 cols, 4 rows) */}
                     <div
                         style={{
                             gridColumn: 'span 4',
-                            gridRow: 'span 3',
-                            minHeight: '300px'
+                            gridRow: 'span 4',
+                            minHeight: '400px'
                         }}
                     >
                         <AddWidgetCard />

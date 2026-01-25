@@ -203,6 +203,24 @@ body {
   }
 }
 
+/* Widget Item responsive sizing */
+.widget-item {
+  grid-row: span 4;
+  /* Increased height by 100px (4 units) */
+  height: 100%;
+}
+
+@media (max-width: 480px) {
+  .widget-item {
+    grid-column: span 4;
+    grid-row: span 4;
+    /* Match new widget height */
+    min-height: 400px;
+    /* Match new widget height for better visibility */
+    margin-bottom: 1rem;
+  }
+}
+
 /* Widget card base styles */
 .card {
   background: var(--bg-card);

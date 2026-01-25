@@ -121,7 +121,7 @@ export const providers: ApiProvider[] = [
                 ],
                 defaultFields: [],
                 displayMode: 'card',
-                defaultLayout: { w: 4, h: 3 },
+                defaultLayout: { w: 4, h: 4 },
             },
             {
                 id: 'coins-markets',
@@ -164,7 +164,7 @@ export const providers: ApiProvider[] = [
                     { path: 'price_change_percentage_24h', label: '24h %', format: 'percentage' },
                 ],
                 displayMode: 'table',
-                defaultLayout: { w: 6, h: 3 },
+                defaultLayout: { w: 6, h: 4 },
             },
             {
                 id: 'market-chart',
@@ -208,7 +208,7 @@ export const providers: ApiProvider[] = [
                 ],
                 displayMode: 'chart',
                 chartType: 'line',
-                defaultLayout: { w: 6, h: 3 },
+                defaultLayout: { w: 6, h: 4 },
             },
             {
                 id: 'ohlc',
@@ -249,7 +249,7 @@ export const providers: ApiProvider[] = [
                 defaultFields: [],
                 displayMode: 'chart',
                 chartType: 'candlestick',
-                defaultLayout: { w: 6, h: 3 },
+                defaultLayout: { w: 6, h: 4 },
             },
         ],
         supportsCard: {
@@ -310,7 +310,7 @@ export const providers: ApiProvider[] = [
                     { path: 'Global Quote.10. change percent', label: 'Change %', format: 'percentage' },
                 ],
                 displayMode: 'card',
-                defaultLayout: { w: 4, h: 3 },
+                defaultLayout: { w: 4, h: 4 },
             },
             {
                 id: 'currency-exchange',
@@ -348,7 +348,7 @@ export const providers: ApiProvider[] = [
                     { path: 'Realtime Currency Exchange Rate.5. Exchange Rate', label: 'Rate', format: 'number' },
                 ],
                 displayMode: 'card',
-                defaultLayout: { w: 4, h: 3 },
+                defaultLayout: { w: 4, h: 4 },
             },
         ],
         supportsCard: {
@@ -405,7 +405,7 @@ export const providers: ApiProvider[] = [
                     { path: 'pc', label: 'Prev Close', format: 'currency' },
                 ],
                 displayMode: 'card',
-                defaultLayout: { w: 4, h: 3 },
+                defaultLayout: { w: 4, h: 4 },
             },
             {
                 id: 'company-profile',
@@ -428,7 +428,7 @@ export const providers: ApiProvider[] = [
                     { path: 'finnhubIndustry', label: 'Industry', format: 'text' },
                 ],
                 displayMode: 'card',
-                defaultLayout: { w: 4, h: 3 },
+                defaultLayout: { w: 4, h: 4 },
             },
             {
                 id: 'market-news',
@@ -455,7 +455,7 @@ export const providers: ApiProvider[] = [
                     { path: '[].source', label: 'Source', format: 'text' },
                 ],
                 displayMode: 'table',
-                defaultLayout: { w: 6, h: 3 },
+                defaultLayout: { w: 6, h: 4 },
             },
         ],
         supportsCard: {
@@ -516,7 +516,7 @@ export const providers: ApiProvider[] = [
                     { path: 'low52', label: '52W Low', format: 'currency' },
                 ],
                 displayMode: 'card',
-                defaultLayout: { w: 4, h: 3 },
+                defaultLayout: { w: 4, h: 4 },
             },
             {
                 id: 'trending',
@@ -530,7 +530,7 @@ export const providers: ApiProvider[] = [
                     { path: 'topGainers.[].netChange', label: 'Change', format: 'currency' },
                 ],
                 displayMode: 'table',
-                defaultLayout: { w: 6, h: 3 },
+                defaultLayout: { w: 6, h: 4 },
             },
             {
                 id: 'ipo',
@@ -544,7 +544,7 @@ export const providers: ApiProvider[] = [
                     { path: 'upcoming.[].price', label: 'Price Range', format: 'text' },
                 ],
                 displayMode: 'table',
-                defaultLayout: { w: 6, h: 3 },
+                defaultLayout: { w: 6, h: 4 },
             },
         ],
         supportsCard: {
@@ -584,7 +584,7 @@ export const providers: ApiProvider[] = [
                 ],
                 defaultFields: [],
                 displayMode: 'card',
-                defaultLayout: { w: 4, h: 3 },
+                defaultLayout: { w: 4, h: 4 },
             },
         ],
         supportsCard: {
