@@ -8,6 +8,7 @@ import { providers, ApiProvider, ApiEndpoint, buildApiUrl, getEndpoint } from '@
 import FieldSelector from './FieldSelector';
 import SymbolSearch from './SymbolSearch';
 import WatchlistSelector from './WatchlistSelector';
+import CoinSelector from './CoinSelector';
 
 type RefreshOption = { value: number; label: string };
 const REFRESH_OPTIONS: RefreshOption[] = [
@@ -54,6 +55,9 @@ export default function AddWidgetModal() {
     // Watchlist state
     const [watchlistItems, setWatchlistItems] = useState<WatchlistItem[]>([]);
 
+    // Table Coin Selector state
+    const [tableSelectedCoins, setTableSelectedCoins] = useState<string[]>([]);
+
     // API test state
     const [isTestingApi, setIsTestingApi] = useState(false);
     const [apiTestResult, setApiTestResult] = useState<{
@@ -93,6 +97,15 @@ export default function AddWidgetModal() {
             setSelectedFields(editingWidget.selectedFields);
             setApiUrl(editingWidget.apiUrl);
             setWatchlistItems(editingWidget.watchlistItems || []);
+
+            // Extract coin IDs from params if table widget
+            if (editingWidget.displayMode === 'table' && editingWidget.providerId === 'coingecko') {
+                const idsParam = editingWidget.endpointParams?.ids;
+                if (idsParam) {
+                    setTableSelectedCoins(idsParam.split(','));
+                }
+            }
+
             if (editingWidget.providerId) {
                 setSelectedProviderId(editingWidget.providerId);
             }
@@ -107,14 +120,19 @@ export default function AddWidgetModal() {
             let targetEndpointId = selectedProvider.endpoints[0].id;
 
             // Select specific endpoints for Market Gainers
-            if (cardStyle === 'market-gainers') {
+            if (widgetType === 'card' && cardStyle === 'market-gainers') {
                 if (selectedProvider.id === 'coingecko') targetEndpointId = 'coins-markets';
                 if (selectedProvider.id === 'indianapi') targetEndpointId = 'trending';
             }
 
+            // For Table, select coins-markets for CoinGecko
+            if (widgetType === 'table' && selectedProvider.id === 'coingecko') {
+                targetEndpointId = 'coins-markets';
+            }
+
             setSelectedEndpointId(targetEndpointId);
         }
-    }, [selectedProviderId, selectedProvider, cardStyle]);
+    }, [selectedProviderId, selectedProvider, cardStyle, widgetType]);
 
     // Set default params and build URL when endpoint changes
     useEffect(() => {
@@ -127,10 +145,20 @@ export default function AddWidgetModal() {
             });
 
             // Override defaults for Market Gainers -> Force True Top Gainers
-            if (cardStyle === 'market-gainers') {
+            if (widgetType === 'card' && cardStyle === 'market-gainers') {
                 if (selectedProvider.id === 'coingecko' && selectedEndpoint.id === 'coins-markets') {
                     // Sort by 24h % change descending to get actual top gainers
                     defaultParams['order'] = 'price_change_percentage_24h_desc';
+                }
+            }
+
+            // Table Defaults (Top 5) if no coins selected yet
+            if (widgetType === 'table' && selectedProvider.id === 'coingecko') {
+                // If tableSelectedCoins has items, URL update effect handles it. 
+                // Initially empty? Default to per_page=5
+                if (tableSelectedCoins.length === 0) {
+                    defaultParams['per_page'] = '5';
+                    defaultParams['page'] = '1';
                 }
             }
 
@@ -141,15 +169,35 @@ export default function AddWidgetModal() {
             const url = buildApiUrl(selectedProvider, selectedEndpoint, defaultParams);
             setApiUrl(url);
         }
-    }, [selectedEndpointId, selectedEndpoint, selectedProvider]);
+    }, [selectedEndpointId, selectedEndpoint, selectedProvider, widgetType]);
 
-    // Update API URL when params change (for symbol selection etc)
+    // Update API URL when params change (for symbol selection etc) or Table Coin selection changes
     useEffect(() => {
-        if (selectedProvider && selectedEndpoint && Object.keys(endpointParams).length > 0) {
-            const url = buildApiUrl(selectedProvider, selectedEndpoint, endpointParams);
-            setApiUrl(url);
+        if (selectedProvider && selectedEndpoint) {
+            let currentParams = { ...endpointParams };
+
+            // Special handling for CoinGecko Table widget Coin Selection
+            if (widgetType === 'table' && selectedProvider.id === 'coingecko') {
+                if (tableSelectedCoins.length > 0) {
+                    // If coins selected, pass ids and remove per_page/page (pagination ignored)
+                    currentParams['ids'] = tableSelectedCoins.join(',');
+                    delete currentParams['per_page'];
+                    delete currentParams['page'];
+                } else {
+                    // If no coins, ensure top 5 default
+                    delete currentParams['ids'];
+                    currentParams['per_page'] = '5';
+                    currentParams['page'] = '1';
+                }
+            }
+
+            if (Object.keys(currentParams).length > 0 || selectedProvider.id === 'custom') {
+                const url = buildApiUrl(selectedProvider, selectedEndpoint, currentParams);
+                setApiUrl(url);
+                // We don't update endpointParams state here to avoid loops, purely deriving URL
+            }
         }
-    }, [selectedProvider, selectedEndpoint, endpointParams]);
+    }, [selectedProvider, selectedEndpoint, endpointParams, tableSelectedCoins, widgetType]);
 
     const resetForm = () => {
         setName('');
@@ -164,6 +212,7 @@ export default function AddWidgetModal() {
         setEndpointParams({});
         setApiUrl('');
         setWatchlistItems([]);
+        setTableSelectedCoins([]);
         setApiTestResult(null);
     };
 
@@ -190,13 +239,28 @@ export default function AddWidgetModal() {
         try {
             let response;
             if (selectedProviderId && selectedProviderId !== 'custom' && selectedProvider) {
+                // For Table CoinGecko, ensure params match URL logic (derived state)
+                // We construct the params object dynamically for the request
+                let finalParams = { ...endpointParams };
+                if (widgetType === 'table' && selectedProvider.id === 'coingecko') {
+                    if (tableSelectedCoins.length > 0) {
+                        finalParams['ids'] = tableSelectedCoins.join(',');
+                        delete finalParams['per_page'];
+                        delete finalParams['page'];
+                    } else {
+                        delete finalParams['ids'];
+                        finalParams['per_page'] = '5';
+                        finalParams['page'] = '1';
+                    }
+                }
+
                 response = await fetch('/api/data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         providerId: selectedProviderId,
                         endpointId: selectedEndpointId,
-                        params: endpointParams,
+                        params: finalParams,
                     }),
                 });
             } else {
@@ -216,8 +280,8 @@ export default function AddWidgetModal() {
                     success: true,
                     fields: flattened,
                 });
-                // Set default fields from endpoint
-                if (selectedEndpoint?.defaultFields.length) {
+                // Set default fields from endpoint if empty
+                if (selectedFields.length === 0 && selectedEndpoint?.defaultFields.length) {
                     setSelectedFields(selectedEndpoint.defaultFields);
                 }
             } else {
@@ -244,16 +308,28 @@ export default function AddWidgetModal() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Build final endpoint params, including watchlist items if applicable
+        // Build final endpoint params
         let finalEndpointParams = { ...endpointParams };
 
-        // For watchlist widgets, include all symbols in the API params
+        // For watchlist widgets
         if (cardStyle === 'watchlist' && watchlistItems.length > 0) {
             const symbolList = watchlistItems.map(item => item.symbol.toLowerCase()).join(',');
-
-            // CoinGecko uses 'ids', Finnhub uses single 'symbol', etc.
             if (selectedProviderId === 'coingecko') {
                 finalEndpointParams = { ...finalEndpointParams, ids: symbolList };
+            }
+        }
+
+        // For Table CoinGecko widgets
+        if (widgetType === 'table' && selectedProviderId === 'coingecko') {
+            if (tableSelectedCoins.length > 0) {
+                finalEndpointParams['ids'] = tableSelectedCoins.join(',');
+                delete finalEndpointParams['per_page'];
+                delete finalEndpointParams['page'];
+            } else {
+                // Confirm defaults
+                delete finalEndpointParams['ids'];
+                finalEndpointParams['per_page'] = '5';
+                finalEndpointParams['page'] = '1';
             }
         }
 
@@ -425,7 +501,26 @@ export default function AddWidgetModal() {
                             </label>
                             <div className="grid grid-cols-2 gap-2">
                                 {providers.filter(p => p.id !== 'custom').map((provider) => {
-                                    const isDisabled = !availableProviders.some(p => p.id === provider.id);
+                                    // Check if provider supports the current card style
+                                    let isSupported = true;
+                                    if (widgetType === 'card' && cardStyle && provider.supportsCard) {
+                                        // Map kebab-case card styles to camelCase support keys
+                                        if (cardStyle === 'market-gainers') {
+                                            isSupported = provider.supportsCard.marketGainers;
+                                        } else if (cardStyle === 'financial-data') {
+                                            isSupported = provider.supportsCard.financialData;
+                                        } else {
+                                            // 'watchlist' matches the key
+                                            isSupported = provider.supportsCard.watchlist;
+                                        }
+                                    } else if (widgetType === 'table') {
+                                        isSupported = provider.supportsTable;
+                                    } else if (widgetType === 'chart') {
+                                        isSupported = provider.supportsChart;
+                                    }
+
+                                    const isDisabled = !isSupported;
+
                                     return (
                                         <button
                                             key={provider.id}
@@ -435,7 +530,7 @@ export default function AddWidgetModal() {
                                             className={`rounded-lg border-2 px-3 py-2.5 text-left text-sm font-medium transition-all ${selectedProviderId === provider.id
                                                 ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)] text-white'
                                                 : isDisabled
-                                                    ? 'cursor-not-allowed border-[var(--border-color)] opacity-40'
+                                                    ? 'cursor-not-allowed border-[var(--border-color)] opacity-40 grayscale'
                                                     : 'border-[var(--border-color)] hover:border-[var(--text-muted)]'
                                                 }`}
                                         >
@@ -502,6 +597,37 @@ export default function AddWidgetModal() {
                             </div>
                         )}
 
+
+                        {/* Coin Selector (for Table - CoinGecko only) */}
+                        {widgetType === 'table' && selectedProviderId === 'coingecko' && selectedEndpoint && (
+                            <div className="animate-fade-in">
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                                    Select Coins <span className="font-normal">(Optional - Default: Top 5)</span>
+                                </label>
+                                <CoinSelector
+                                    providerId={selectedProviderId}
+                                    selectedCoins={tableSelectedCoins}
+                                    onChange={setTableSelectedCoins}
+                                    placeholder="Search coins (e.g. bitcoin, ethereum)..."
+                                />
+                            </div>
+                        )}
+
+                        {/* Field Selector (for Chart, Table, and Financial Data Card) */}
+                        {((widgetType !== 'card') || (widgetType === 'card' && cardStyle === 'financial-data')) && apiTestResult && apiTestResult.success && (
+                            <div className="animate-fade-in">
+                                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                                    Select Fields to Display
+                                </label>
+                                <FieldSelector
+                                    fields={apiTestResult.fields || []}
+                                    selectedFields={selectedFields}
+                                    onFieldsChange={setSelectedFields}
+                                    displayMode={widgetType}
+                                />
+                            </div>
+                        )}
+
                         {/* Stock/Symbol Selection (for financial-data after API test) */}
                         {widgetType === 'card' && cardStyle === 'financial-data' && selectedEndpoint && apiTestResult?.success && (
                             <div>
@@ -524,15 +650,7 @@ export default function AddWidgetModal() {
                             </div>
                         )}
 
-                        {/* Field Selector (for financial data card or table) */}
-                        {apiTestResult?.success && apiTestResult.fields && (widgetType === 'table' || (widgetType === 'card' && cardStyle === 'financial-data')) && (
-                            <FieldSelector
-                                fields={apiTestResult.fields}
-                                selectedFields={selectedFields}
-                                onFieldsChange={setSelectedFields}
-                                displayMode={widgetType}
-                            />
-                        )}
+
 
                         {/* Refresh Rate */}
                         {apiTestResult?.success && (

@@ -1,6 +1,6 @@
 'use client';
 
-import { Widget, WatchlistItem } from '@/types';
+import { Widget, WatchlistItem, WidgetConfig } from '@/types';
 import { getValueByPath, formatValue } from '@/lib/dataMapper';
 
 interface CardWidgetProps {
@@ -30,6 +30,7 @@ const formatPrice = (value: number | string): string => {
 
 // Format percentage change
 const formatChange = (value: number | string): { text: string; isPositive: boolean } => {
+    if (value === null || value === undefined) return { text: '0.00%', isPositive: true };
     const num = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(num)) return { text: '0.00%', isPositive: true };
     const isPositive = num >= 0;
@@ -88,44 +89,73 @@ function WatchlistRow({ name, symbol, price, change, index, currency }: Watchlis
     );
 }
 
-// Financial Data Card (centered large display)
+// Financial Data Card (centered large display + grid)
 function FinancialDataCard({ widget, data }: CardWidgetProps) {
-    // Get first field values for display
+    // Get symbol from widget name or data
+    const symbol = widget.name || 'STOCK';
+    const currency = getCurrency(widget);
+
+    // Find price and change fields for main display
+    // Prioritize exact matches to avoid partial matches on metadata (e.g. 'priceToEarnings' object)
     const priceField = widget.selectedFields.find(f =>
-        f.path.toLowerCase().includes('price') || f.path.toLowerCase().includes('c')
+        f.path === 'currentPrice' || f.path === 'c' || f.path === 'price' || f.path === 'ltp'
+    ) || widget.selectedFields.find(f =>
+        f.path.toLowerCase().includes('price') && !f.path.includes('Reference') && !f.path.includes('Ratio')
     );
+
     const changeField = widget.selectedFields.find(f =>
-        f.path.toLowerCase().includes('change') || f.path.toLowerCase().includes('dp')
+        f.path === 'percentChange' || f.path === 'dp' || f.path === 'change' || f.path === 'price_change_percentage_24h'
+    ) || widget.selectedFields.find(f =>
+        f.path.toLowerCase().includes('change') || f.path.toLowerCase().includes('percent')
     );
 
     const price = priceField ? getValueByPath(data, priceField.path) : 0;
     const change = changeField ? getValueByPath(data, changeField.path) : 0;
     const { text: changeText, isPositive } = formatChange(change as number);
 
-    // Get symbol from widget name or data
-    const symbol = widget.name || 'STOCK';
+    // Filter fields for grid (exclude main price/change if we want to avoid duplication, or keep all)
+    // User requested "only selected attribute are shown", so we iterate selectedFields.
+    // However, price/change are usually main. User screenshot shows Price/Change prominent + grid.
+    // We will render ALL selected fields in the grid, but highlight Price in header.
+    // Actually, user said: "Main -> Current Price, Grid -> Selected metrics".
+
+    const gridFields = widget.selectedFields.filter(f =>
+        f.path !== priceField?.path && f.path !== changeField?.path
+    );
 
     return (
-        <div className="flex h-full flex-col items-center justify-center py-8">
-            {/* Symbol */}
-            <p className="mb-1 text-sm uppercase tracking-wider text-[var(--text-muted)]">
-                {symbol.toUpperCase().split(' ')[0]}
-            </p>
-            {/* Name */}
-            <h2 className="mb-4 text-2xl font-bold text-[var(--text-primary)]">
-                {widget.name || 'Stock'}
-            </h2>
-            {/* Large Price */}
-            <p className="mb-4 text-5xl font-bold text-[var(--text-primary)]">
-                {formatPrice(price as number)}
-            </p>
-            {/* Change Badge */}
-            <div className={`flex items-center gap-1 rounded-full px-4 py-2 ${isPositive
-                ? 'bg-emerald-500/20 text-emerald-400'
-                : 'bg-pink-500/20 text-pink-400'
-                }`}>
-                {isPositive ? <TrendUp /> : <TrendDown />}
-                <span className="font-semibold">{changeText}</span>
+        <div className="flex h-full flex-col p-4">
+            {/* Header */}
+            <div className="mb-4 text-center">
+                <p className="text-sm uppercase tracking-wider text-[var(--text-muted)]">
+                    {symbol.toUpperCase().split(' ')[0]}
+                </p>
+                <div className="flex items-baseline justify-center gap-2">
+                    <h2 className="text-4xl font-bold text-[var(--text-primary)]">
+                        {formatValue(price, 'currency', { currency })}
+                    </h2>
+                </div>
+                <div className={`flex items-center justify-center gap-1 text-sm font-medium ${isPositive ? 'text-emerald-400' : 'text-pink-400'}`}>
+                    {isPositive ? <TrendUp /> : <TrendDown />}
+                    <span>{changeText}</span>
+                </div>
+            </div>
+
+            {/* Grid of Attributes */}
+            <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto">
+                {gridFields.map((field, index) => {
+                    const value = getValueByPath(data, field.path);
+                    return (
+                        <div key={index} className="flex flex-col justify-center rounded-lg bg-[var(--bg-card-secondary)] p-3">
+                            <span className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                                {field.label}
+                            </span>
+                            <span className="text-lg font-bold text-[var(--text-primary)]">
+                                {formatValue(value, field.format, { currency })}
+                            </span>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

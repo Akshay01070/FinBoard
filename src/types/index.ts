@@ -44,6 +44,8 @@ export interface Widget {
   endpointParams?: Record<string, string>; // Params for API call
 }
 
+export type WidgetConfig = Widget;
+
 export interface DashboardState {
   widgets: Widget[];
   theme: Theme;

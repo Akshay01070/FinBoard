@@ -50,27 +50,37 @@ export default function TableWidget({ widget, data }: TableWidgetProps) {
 
     // Get column headers from selected fields or first data item
     const columns = useMemo(() => {
-        if (widget.selectedFields.length > 0) {
-            return widget.selectedFields.map((f) => ({
-                key: f.path.split('.').pop() || f.path,
-                label: f.label,
-                path: f.path,
-                format: f.format,
-            }));
-        }
+        const selected = widget.selectedFields;
 
-        // Auto-detect columns from first item
-        if (tableData.length > 0 && typeof tableData[0] === 'object') {
-            return Object.keys(tableData[0] as Record<string, unknown>).map((key) => ({
-                key,
-                label: key.toUpperCase(),
-                path: key,
-                format: undefined,
-            }));
-        }
+        // Fixed columns for Identity (Name, Symbol)
+        // We assume these are always desirable for a crypto table
+        // We'll manually construct them to ensure they appear first and have specific styling
+        const fixedColumns = [
+            { key: 'identity', label: 'Company', path: 'identity', format: undefined }, // Special composite column
+        ];
 
-        return [];
-    }, [widget.selectedFields, tableData]);
+        // Filter out fields that are already covered by fixed columns (like 'name', 'symbol', 'image')
+        const dynamicColumns = selected.filter(f =>
+            !['name', 'symbol', 'id', 'image', 'thumb', 'large'].includes(f.path.toLowerCase()) &&
+            !['name', 'symbol', 'id'].includes(f.label.toLowerCase())
+        ).map((f) => ({
+            key: f.path.split('.').pop() || f.path,
+            label: f.label,
+            path: f.path,
+            format: f.format,
+        }));
+
+        return [...fixedColumns, ...dynamicColumns];
+    }, [widget.selectedFields]);
+
+    // Format helpers
+    const getIdentity = (item: any) => {
+        // Try to find name, symbol, image
+        const name = item.name || item.id || 'Unknown';
+        const symbol = item.symbol || '';
+        const image = item.image || item.thumb || item.large || '';
+        return { name, symbol, image };
+    };
 
     // Filter and sort data
     const processedData = useMemo(() => {
@@ -79,6 +89,12 @@ export default function TableWidget({ widget, data }: TableWidgetProps) {
         // Filter by search term
         if (searchTerm) {
             result = result.filter((item) => {
+                const { name, symbol } = getIdentity(item);
+                if (name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    symbol.toLowerCase().includes(searchTerm.toLowerCase())) {
+                    return true;
+                }
+
                 return columns.some((col) => {
                     const value = getValueByPath(item, col.path) ?? getValueByPath(item, col.key);
                     return String(value).toLowerCase().includes(searchTerm.toLowerCase());
@@ -89,6 +105,14 @@ export default function TableWidget({ widget, data }: TableWidgetProps) {
         // Sort
         if (sortColumn) {
             result.sort((a, b) => {
+                if (sortColumn === 'identity') {
+                    const nameA = getIdentity(a).name;
+                    const nameB = getIdentity(b).name;
+                    return sortDirection === 'asc'
+                        ? nameA.localeCompare(nameB)
+                        : nameB.localeCompare(nameA);
+                }
+
                 const aVal = getValueByPath(a, sortColumn) ?? '';
                 const bVal = getValueByPath(b, sortColumn) ?? '';
 
@@ -158,12 +182,12 @@ export default function TableWidget({ widget, data }: TableWidgetProps) {
             <div className="flex-1 overflow-x-auto">
                 <table className="w-full">
                     <thead>
-                        <tr className="border-b border-[var(--border-color)]">
+                        <tr className="border-b border-[var(--border-color)] bg-[var(--bg-card)]">
                             {columns.map((col) => (
                                 <th
                                     key={col.key}
                                     onClick={() => handleSort(col.path || col.key)}
-                                    className="cursor-pointer px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                                    className="cursor-pointer px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
                                 >
                                     <div className="flex items-center gap-1">
                                         {col.label}
@@ -183,46 +207,66 @@ export default function TableWidget({ widget, data }: TableWidgetProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {paginatedData.map((item, rowIndex) => (
-                            <tr
-                                key={rowIndex}
-                                className="border-b border-[var(--border-color)]/50 transition-colors hover:bg-[var(--bg-secondary)]"
-                            >
-                                {columns.map((col, colIndex) => {
-                                    const value = getValueByPath(item, col.path) ?? getValueByPath(item, col.key);
-                                    const isPercentColumn = col.label.toLowerCase().includes('change') || col.label.toLowerCase().includes('percent');
+                        {paginatedData.map((item, rowIndex) => {
+                            const { name, symbol, image } = getIdentity(item);
+                            return (
+                                <tr
+                                    key={rowIndex}
+                                    className="border-b border-[var(--border-color)]/50 transition-colors hover:bg-[var(--bg-secondary)]"
+                                >
+                                    {columns.map((col, colIndex) => {
+                                        // Special render for Identity column
+                                        if (col.key === 'identity') {
+                                            return (
+                                                <td key={col.key} className="px-4 py-3">
+                                                    <div className="flex items-center gap-3">
+                                                        {image && (
+                                                            <img src={image} alt={symbol} className="h-6 w-6 rounded-full" />
+                                                        )}
+                                                        <div>
+                                                            <div className="font-semibold text-[var(--text-primary)]">{name}</div>
+                                                            {symbol && <div className="text-xs font-medium uppercase text-[var(--text-muted)]">{symbol}</div>}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            );
+                                        }
 
-                                    // Special styling for first column (company name)
-                                    if (colIndex === 0) {
+                                        const value = getValueByPath(item, col.path) ?? getValueByPath(item, col.key);
+                                        const isPercentColumn = col.label.toLowerCase().includes('change') || col.label.toLowerCase().includes('percent') || col.label.includes('%');
+
+                                        // Percentage column with color
+                                        if (isPercentColumn && typeof value === 'number') {
+                                            const { text, isPositive } = formatPercentChange(value);
+                                            return (
+                                                <td key={col.key} className="px-4 py-3">
+                                                    <span className={`font-medium ${isPositive ? 'text-emerald-400' : 'text-pink-400'}`}>
+                                                        {text}
+                                                    </span>
+                                                </td>
+                                            );
+                                        }
+
+                                        // Rank column styling
+                                        if (col.label.toLowerCase().includes('rank')) {
+                                            return (
+                                                <td key={col.key} className="px-4 py-3">
+                                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--bg-secondary)] text-xs font-medium text-[var(--text-muted)] border border-[var(--border-color)]">
+                                                        {value}
+                                                    </span>
+                                                </td>
+                                            );
+                                        }
+
                                         return (
-                                            <td key={col.key} className="px-4 py-3">
-                                                <span className="font-medium text-[var(--text-primary)]">
-                                                    {String(value)}
-                                                </span>
+                                            <td key={col.key} className="px-4 py-3 text-sm font-medium text-[var(--text-secondary)]">
+                                                {formatValue(value, col.format)}
                                             </td>
                                         );
-                                    }
-
-                                    // Percentage column with color
-                                    if (isPercentColumn && typeof value === 'number') {
-                                        const { text, isPositive } = formatPercentChange(value);
-                                        return (
-                                            <td key={col.key} className="px-4 py-3">
-                                                <span className={isPositive ? 'text-emerald-400' : 'text-pink-400'}>
-                                                    {text}
-                                                </span>
-                                            </td>
-                                        );
-                                    }
-
-                                    return (
-                                        <td key={col.key} className="px-4 py-3 text-sm text-[var(--text-secondary)]">
-                                            {formatValue(value, col.format)}
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
+                                    })}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -253,8 +297,8 @@ export default function TableWidget({ widget, data }: TableWidgetProps) {
                                     key={pageNum}
                                     onClick={() => setCurrentPage(pageNum)}
                                     className={`flex h-8 w-8 items-center justify-center rounded text-sm font-medium transition-colors ${currentPage === pageNum
-                                            ? 'bg-[var(--accent-primary)] text-white'
-                                            : 'text-[var(--text-muted)] hover:bg-[var(--bg-secondary)]'
+                                        ? 'bg-[var(--accent-primary)] text-white'
+                                        : 'text-[var(--text-muted)] hover:bg-[var(--bg-secondary)]'
                                         }`}
                                 >
                                     {pageNum}
