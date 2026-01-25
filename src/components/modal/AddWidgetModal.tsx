@@ -130,9 +130,24 @@ export default function AddWidgetModal() {
                 targetEndpointId = 'coins-markets';
             }
 
+            // For Chart, select stock-candle for Finnhub
+            if (widgetType === 'chart' && selectedProvider.id === 'finnhub') {
+                targetEndpointId = 'stock-candle';
+            }
+
+            // For Chart, select stock-chart for Alpha Vantage
+            if (widgetType === 'chart' && selectedProvider.id === 'alphavantage') {
+                targetEndpointId = 'stock-chart';
+            }
+
+            // For Chart, select market-chart for CoinGecko (default)
+            if (widgetType === 'chart' && selectedProvider.id === 'coingecko') {
+                targetEndpointId = chartType === 'candlestick' ? 'ohlc' : 'market-chart';
+            }
+
             setSelectedEndpointId(targetEndpointId);
         }
-    }, [selectedProviderId, selectedProvider, cardStyle, widgetType]);
+    }, [selectedProviderId, selectedProvider, cardStyle, widgetType, chartType]);
 
     // Set default params and build URL when endpoint changes
     useEffect(() => {
@@ -146,21 +161,15 @@ export default function AddWidgetModal() {
 
             // Override defaults for Market Gainers -> Force True Top Gainers
             if (widgetType === 'card' && cardStyle === 'market-gainers') {
+                // ... (params logic existing) ...
                 if (selectedProvider.id === 'coingecko' && selectedEndpoint.id === 'coins-markets') {
-                    // Sort by 24h % change descending to get actual top gainers
                     defaultParams['order'] = 'price_change_percentage_24h_desc';
                 }
             }
+            // ...
+            // ... [Jumping to handleTestApi for param injection]
+            // ...
 
-            // Table Defaults (Top 5) if no coins selected yet
-            if (widgetType === 'table' && selectedProvider.id === 'coingecko') {
-                // If tableSelectedCoins has items, URL update effect handles it. 
-                // Initially empty? Default to per_page=5
-                if (tableSelectedCoins.length === 0) {
-                    defaultParams['per_page'] = '5';
-                    defaultParams['page'] = '1';
-                }
-            }
 
             setEndpointParams(defaultParams);
             setApiTestResult(null);
@@ -205,7 +214,7 @@ export default function AddWidgetModal() {
         setCardStyle('financial-data');
         setChartType('line');
         setChartInterval('1W');
-        setRefreshInterval(30);
+        setRefreshInterval(300); // Default 5 mins to save API calls
         setSelectedFields([]);
         setSelectedProviderId(null);
         setSelectedEndpointId(null);
@@ -252,6 +261,29 @@ export default function AddWidgetModal() {
                         finalParams['per_page'] = '5';
                         finalParams['page'] = '1';
                     }
+                }
+
+                // For Chart (Finnhub Candle), ensure required params exist for testing
+                if (widgetType === 'chart' && selectedProvider.id === 'finnhub' && selectedEndpointId === 'stock-candle') {
+                    if (!finalParams['resolution']) finalParams['resolution'] = 'D';
+                    if (!finalParams['symbol']) finalParams['symbol'] = 'AAPL'; // Default for connection test
+
+                    const now = Math.floor(Date.now() / 1000);
+                    if (!finalParams['to']) finalParams['to'] = now.toString();
+                    if (!finalParams['from']) finalParams['from'] = (now - (30 * 24 * 60 * 60)).toString(); // 1M ago
+                }
+
+                // For Chart (Alpha Vantage), ensure required params exist
+                if (widgetType === 'chart' && selectedProvider.id === 'alphavantage' && selectedEndpointId === 'stock-chart') {
+                    if (!finalParams['symbol']) finalParams['symbol'] = 'IBM'; // Default recommended by Alpha Vantage
+                    if (!finalParams['function']) finalParams['function'] = 'TIME_SERIES_DAILY';
+                }
+
+                // For Chart (CoinGecko), ensure required params exist
+                if (widgetType === 'chart' && selectedProvider.id === 'coingecko' && (selectedEndpointId === 'market-chart' || selectedEndpointId === 'ohlc')) {
+                    if (!finalParams['coinId']) finalParams['coinId'] = 'bitcoin';
+                    if (!finalParams['vs_currency']) finalParams['vs_currency'] = 'usd';
+                    if (!finalParams['days']) finalParams['days'] = '7';
                 }
 
                 response = await fetch('/api/data', {
@@ -330,6 +362,21 @@ export default function AddWidgetModal() {
                 delete finalEndpointParams['ids'];
                 finalEndpointParams['per_page'] = '5';
                 finalEndpointParams['page'] = '1';
+            }
+        }
+
+        // For CoinGecko Chart widgets - ensure coinId is saved
+        if (widgetType === 'chart' && selectedProviderId === 'coingecko') {
+            // If coinId is not set, default to 'bitcoin'
+            if (!finalEndpointParams['coinId']) {
+                finalEndpointParams['coinId'] = 'bitcoin';
+            }
+            // Ensure vs_currency and days have defaults
+            if (!finalEndpointParams['vs_currency']) {
+                finalEndpointParams['vs_currency'] = 'usd';
+            }
+            if (!finalEndpointParams['days']) {
+                finalEndpointParams['days'] = '7';
             }
         }
 
@@ -517,6 +564,10 @@ export default function AddWidgetModal() {
                                         isSupported = provider.supportsTable;
                                     } else if (widgetType === 'chart') {
                                         isSupported = provider.supportsChart;
+                                        // Disable Alpha Vantage for Charts as per user request
+                                        if (provider.id === 'alphavantage') {
+                                            isSupported = false;
+                                        }
                                     }
 
                                     const isDisabled = !isSupported;
@@ -613,8 +664,8 @@ export default function AddWidgetModal() {
                             </div>
                         )}
 
-                        {/* Field Selector (for Chart, Table, and Financial Data Card) */}
-                        {((widgetType !== 'card') || (widgetType === 'card' && cardStyle === 'financial-data')) && apiTestResult && apiTestResult.success && (
+                        {/* Field Selector (Table and Financial Data Card only) */}
+                        {((widgetType === 'table') || (widgetType === 'card' && cardStyle === 'financial-data')) && apiTestResult && apiTestResult.success && (
                             <div className="animate-fade-in">
                                 <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                                     Select Fields to Display
@@ -629,7 +680,7 @@ export default function AddWidgetModal() {
                         )}
 
                         {/* Stock/Symbol Selection (for financial-data after API test) */}
-                        {widgetType === 'card' && cardStyle === 'financial-data' && selectedEndpoint && apiTestResult?.success && (
+                        {((widgetType === 'card' && cardStyle === 'financial-data') || widgetType === 'chart') && selectedEndpoint && apiTestResult?.success && (
                             <div>
                                 {selectedEndpoint.params
                                     .filter(p => p.type === 'symbol')

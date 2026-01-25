@@ -38,6 +38,13 @@ export async function POST(request: NextRequest) {
         // Build the API URL
         let apiUrl = buildApiUrl(provider, endpoint, params);
 
+        // DEBUG: Log API call details
+        console.log('=== API Data Route Debug ===');
+        console.log('Provider:', providerId, '| Endpoint:', endpointId);
+        console.log('Params:', JSON.stringify(params, null, 2));
+        console.log('Constructed URL:', apiUrl);
+        console.log('===========================');
+
         // Special handling for custom URLs
         if (providerId === 'custom') {
             apiUrl = params.url;
@@ -123,6 +130,9 @@ export async function POST(request: NextRequest) {
 
         if (!response.ok) {
             const errorText = await response.text().catch(() => 'No error details');
+            console.error(`[API Error] ${response.status} from ${apiUrl}`);
+            console.error(`[API Body] ${errorText}`);
+
             return NextResponse.json(
                 { error: `API error: ${response.status} - ${errorText}` },
                 { status: response.status }

@@ -350,6 +350,32 @@ export const providers: ApiProvider[] = [
                 displayMode: 'card',
                 defaultLayout: { w: 4, h: 4 },
             },
+            {
+                id: 'stock-chart',
+                name: 'Stock Chart',
+                description: 'Historical stock prices',
+                path: '',
+                params: [
+                    {
+                        id: 'function',
+                        name: 'Function',
+                        type: 'text',
+                        required: true,
+                        default: 'TIME_SERIES_DAILY',
+                    },
+                    {
+                        id: 'symbol',
+                        name: 'Stock Symbol',
+                        type: 'symbol',
+                        required: true,
+                        placeholder: 'Search for a stock...',
+                    },
+                ],
+                defaultFields: [],
+                displayMode: 'chart',
+                chartType: 'candlestick',
+                defaultLayout: { w: 6, h: 4 },
+            },
         ],
         supportsCard: {
             watchlist: true,
@@ -457,6 +483,26 @@ export const providers: ApiProvider[] = [
                 displayMode: 'table',
                 defaultLayout: { w: 6, h: 4 },
             },
+            {
+                id: 'stock-candle',
+                name: 'Stock Candles',
+                description: 'OHLC candlestick data',
+                path: '/stock/candle',
+                params: [
+                    {
+                        id: 'symbol',
+                        name: 'Stock Symbol',
+                        type: 'symbol',
+                        required: true,
+                        placeholder: 'Search for a stock...',
+                    },
+                    // resolution, from, to are handled programmatically by ChartWidget
+                ],
+                defaultFields: [],
+                displayMode: 'chart',
+                chartType: 'candlestick',
+                defaultLayout: { w: 6, h: 4 },
+            },
         ],
         supportsCard: {
             watchlist: true,
@@ -464,7 +510,7 @@ export const providers: ApiProvider[] = [
             financialData: true,
         },
         supportsTable: false,
-        supportsChart: true,
+        supportsChart: false, // Disabling Chart due to API restriction
     },
 
     // ============================================
@@ -593,7 +639,7 @@ export const providers: ApiProvider[] = [
             financialData: true,
         },
         supportsTable: false,
-        supportsChart: true,
+        supportsChart: false,
     },
 ];
 

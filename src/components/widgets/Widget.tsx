@@ -8,7 +8,7 @@ import { Widget as WidgetType } from '@/types';
 import { fetchApiData } from '@/lib/api';
 import CardWidget from './CardWidget';
 import TableWidget from './TableWidget';
-import ChartWidget from './ChartWidget';
+import TradingViewWidget from './TradingViewWidget';
 
 interface WidgetProps {
     widget: WidgetType;
@@ -183,6 +183,88 @@ export default function Widget({ widget }: WidgetProps) {
             // ========================================
             // DEFAULT: Single API call for non-watchlist widgets
             // ========================================
+
+            // Handle Chart Interval -> Dynamic Dates & Resolution (Finnhub)
+            if (widget.displayMode === 'chart' && widget.providerId === 'finnhub') {
+                const now = Math.floor(Date.now() / 1000);
+                let resolution = 'D';
+                let from = now - (30 * 24 * 60 * 60); // Default 1M
+
+                switch (widget.chartInterval) {
+                    case '1D':
+                        resolution = '5'; // 5 min candles for 1D
+                        from = now - (24 * 60 * 60);
+                        break;
+                    case '1W':
+                        resolution = '60'; // 1h candles for 1W
+                        from = now - (7 * 24 * 60 * 60);
+                        break;
+                    case '1M':
+                        resolution = 'D'; // Daily candles for 1M
+                        from = now - (30 * 24 * 60 * 60);
+                        break;
+                    case '1Y':
+                        resolution = 'W'; // Weekly candles for 1Y
+                        from = now - (365 * 24 * 60 * 60);
+                        break;
+                }
+
+                params = {
+                    ...params,
+                    resolution,
+                    from: from.toString(),
+                    to: now.toString(),
+                };
+            }
+
+            // Handle Alpha Vantage Chart Logic
+            if (widget.displayMode === 'chart' && widget.providerId === 'alphavantage') {
+                let functionName = 'TIME_SERIES_DAILY';
+                let intervalParam = '';
+
+                switch (widget.chartInterval) {
+                    case '1D':
+                        // Intraday is Premium-only for many symbols now. Fallback to Daily.
+                        functionName = 'TIME_SERIES_DAILY';
+                        break;
+                    case '1W':
+                        // Intraday is Premium-only. Fallback to Daily (Last 100 days).
+                        functionName = 'TIME_SERIES_DAILY';
+                        break;
+                    case '1M':
+                        functionName = 'TIME_SERIES_DAILY';
+                        break;
+                    case '1Y':
+                        functionName = 'TIME_SERIES_WEEKLY';
+                        break;
+                }
+
+                params = {
+                    ...params,
+                    function: functionName,
+                };
+
+                if (intervalParam) {
+                    params['interval'] = intervalParam;
+                }
+            }
+
+            // Handle CoinGecko Chart Logic
+            if (widget.displayMode === 'chart' && widget.providerId === 'coingecko') {
+                let days = '7';
+                switch (widget.chartInterval) {
+                    case '1D': days = '1'; break;
+                    case '1W': days = '7'; break;
+                    case '1M': days = '30'; break;
+                    case '1Y': days = '365'; break;
+                }
+                params = {
+                    ...params,
+                    days,
+                    vs_currency: params.vs_currency || 'usd',
+                };
+            }
+
             const { data, error } = await fetchApiData(widget.apiUrl, {
                 providerId: widget.providerId,
                 endpointId: widget.endpointId,
@@ -267,7 +349,7 @@ export default function Widget({ widget }: WidgetProps) {
             case 'table':
                 return <TableWidget widget={widget} data={widget.cachedData} />;
             case 'chart':
-                return <ChartWidget widget={widget} data={widget.cachedData} />;
+                return <TradingViewWidget widget={widget} data={widget.cachedData} />;
             case 'card':
             default:
                 return <CardWidget widget={widget} data={widget.cachedData} />;

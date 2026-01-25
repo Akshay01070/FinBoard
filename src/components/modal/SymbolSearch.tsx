@@ -80,7 +80,7 @@ export default function SymbolSearch({
         // Debounce search
         debounceRef.current = setTimeout(() => {
             search(newQuery);
-        }, 300);
+        }, 800);
     };
 
     // Handle selection
