@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, ReactNode } from 'react';
 import { Widget } from '@/types';
 import { getValueByPath, formatValue } from '@/lib/dataMapper';
 
@@ -252,7 +252,7 @@ export default function TableWidget({ widget, data }: TableWidgetProps) {
                                             return (
                                                 <td key={col.key} className="px-4 py-3">
                                                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--bg-secondary)] text-xs font-medium text-[var(--text-muted)] border border-[var(--border-color)]">
-                                                        {value}
+                                                        {value as ReactNode}
                                                     </span>
                                                 </td>
                                             );
