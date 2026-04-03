@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { useDashboardStore } from '@/store/dashboardStore';
+import { UserButton } from '@clerk/nextjs';
 
 export default function Header() {
     const { widgets, theme, openModal, toggleTheme } = useDashboardStore();
@@ -153,6 +154,9 @@ export default function Header() {
                             </svg>
                         )}
                     </button>
+
+                    {/* User Account */}
+                    <UserButton />
 
                     {/* Add Widget Button */}
                     <button
