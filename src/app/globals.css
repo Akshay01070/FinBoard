@@ -1,41 +1,55 @@
 @import "tailwindcss";
 
 :root {
-  /* Light theme */
+  /* Light theme — Kinetic Observatory editorial style */
   --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
+  --bg-secondary: #f1f5f9;
+  --bg-card: rgba(255, 255, 255, 0.7);
+  --bg-card-secondary: #f0f2f5;
   --bg-modal: #ffffff;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  --border-color: #e2e8f0;
+  --border-color: rgba(203, 213, 225, 0.4);
   --accent-primary: #10b981;
   --accent-secondary: #059669;
   --accent-hover: #047857;
+  --accent-glow: rgba(16, 185, 129, 0.12);
   --error: #ef4444;
   --success: #22c55e;
   --gradient-start: #f1f5f9;
   --gradient-end: #e2e8f0;
+  --surface-glass: rgba(255, 255, 255, 0.6);
+  --surface-glass-border: rgba(203, 213, 225, 0.35);
+  --shadow-card: 0 4px 32px rgba(0, 0, 0, 0.04);
+  --font-headline: var(--font-manrope), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
 .dark {
-  /* Dark theme - matching reference design */
-  --bg-primary: #0a1628;
-  --bg-secondary: #0f1d32;
-  --bg-card: #162236;
-  --bg-modal: #1a2942;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border-color: #1e3a5f;
-  --accent-primary: #10b981;
-  --accent-secondary: #059669;
-  --accent-hover: #34d399;
-  --error: #f87171;
-  --success: #4ade80;
-  --gradient-start: #0a1628;
-  --gradient-end: #162236;
+  /* Dark theme — Kinetic Observatory midnight foundation */
+  --bg-primary: #0c0e12;
+  --bg-secondary: #111318;
+  --bg-card: rgba(35, 38, 44, 0.5);
+  --bg-card-secondary: #1d2025;
+  --bg-modal: #171a1f;
+  --text-primary: #f6f6fc;
+  --text-secondary: #aaabb0;
+  --text-muted: #6b6d73;
+  --border-color: rgba(70, 72, 77, 0.2);
+  --accent-primary: #3fff8b;
+  --accent-secondary: #13ea79;
+  --accent-hover: #24f07e;
+  --accent-glow: rgba(63, 255, 139, 0.08);
+  --error: #ff716c;
+  --success: #3fff8b;
+  --gradient-start: #0c0e12;
+  --gradient-end: #171a1f;
+  --surface-glass: rgba(35, 38, 44, 0.45);
+  --surface-glass-border: rgba(70, 72, 77, 0.15);
+  --shadow-card: 0 4px 32px rgba(0, 0, 0, 0.3);
+  --font-headline: var(--font-manrope), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
 @theme inline {
@@ -52,98 +66,134 @@
 body {
   background: var(--bg-primary) !important;
   color: var(--text-primary);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-body);
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Dark mode solid background */
 .dark body {
-  background: #0a1628 !important;
+  background: #0c0e12 !important;
 }
 
-/* Scrollbar styling */
+/* ---- Scrollbar (Kinetic style) ---- */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
 
-/* Common utility classes */
+/* ---- Card (Glass morphism) ---- */
 .card {
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-card);
+  height: 100%;
+  width: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+}
+
+.dark .card:hover {
+  box-shadow: 0 8px 40px rgba(63, 255, 139, 0.04);
+}
+
+/* ---- Buttons (Kinetic style) ---- */
 .btn-primary {
-  background: var(--accent-primary);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  color: #005d2c;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.75rem;
+  font-family: var(--font-headline);
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
   cursor: pointer;
   border: none;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+html:not(.dark) .btn-primary {
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 6px 24px rgba(63, 255, 139, 0.2);
+}
+
+html:not(.dark) .btn-primary:hover {
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.25);
 }
 
 .btn-secondary {
-  background: transparent;
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
   color: var(--text-secondary);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.75rem;
+  font-family: var(--font-headline);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
   cursor: pointer;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--surface-glass-border);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-secondary);
+  background: var(--bg-card-secondary);
   color: var(--text-primary);
+  border-color: var(--accent-primary);
 }
 
+/* ---- Input Fields (Kinetic style) ---- */
 .input-field {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: 0.75rem;
   padding: 0.75rem 1rem;
   color: var(--text-primary);
+  font-family: var(--font-body);
   width: 100%;
-  transition: border-color 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .input-field:focus {
   outline: none;
   border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .input-field::placeholder {
   color: var(--text-muted);
 }
 
-/* Modal overlay */
+/* ---- Modal (Glassmorphism) ---- */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,13 +202,19 @@ body {
 
 .modal-content {
   background: var(--bg-modal);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--surface-glass-border);
+  border-radius: 1.5rem;
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  animation: modalSlideIn 0.2s ease-out;
+  animation: modalSlideIn 0.25s ease-out;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+}
+
+.dark .modal-content {
+  background: rgba(23, 26, 31, 0.95);
 }
 
 @keyframes modalSlideIn {
@@ -166,24 +222,21 @@ body {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
-
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-/* Widget grid - 12 column layout with fixed row height */
+/* ---- Widget Grid ---- */
 .widget-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   grid-auto-rows: 100px;
-  /* Fixed row unit */
-  gap: 1rem;
+  gap: 1.25rem;
   padding: 1.5rem;
 }
 
-/* Responsive: fewer columns on smaller screens */
 @media (max-width: 1200px) {
   .widget-grid {
     grid-template-columns: repeat(6, 1fr);
@@ -203,10 +256,9 @@ body {
   }
 }
 
-/* Widget Item responsive sizing */
+/* ---- Widget Item ---- */
 .widget-item {
   grid-row: span 4;
-  /* Increased height by 100px (4 units) */
   height: 100%;
 }
 
@@ -214,23 +266,12 @@ body {
   .widget-item {
     grid-column: span 4;
     grid-row: span 4;
-    /* Match new widget height */
     min-height: 400px;
-    /* Match new widget height for better visibility */
     margin-bottom: 1rem;
   }
 }
 
-/* Widget card base styles */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  height: 100%;
-  width: 100%;
-}
-
-/* Add Widget Card - matches widget card size and style */
+/* ---- Add Widget Card (Kinetic dashed glass) ---- */
 .add-widget-card {
   display: flex;
   flex-direction: column;
@@ -239,23 +280,24 @@ body {
   height: 100%;
   width: 100%;
   min-height: 300px;
-  background: var(--bg-card);
-  border: 2px dashed var(--border-color);
-  border-radius: 12px;
+  background: transparent;
+  border: 2px dashed var(--surface-glass-border);
+  border-radius: 1.25rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .add-widget-card:hover {
   border-color: var(--accent-primary);
-  background: var(--bg-secondary);
+  background: var(--accent-glow);
+  transform: translateY(-2px);
 }
 
-/* Loading spinner */
+/* ---- Loading Spinner ---- */
 .spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--surface-glass-border);
   border-top-color: var(--accent-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -267,80 +309,79 @@ body {
   }
 }
 
-/* Add widget placeholder */
-.add-widget-card {
-  border: 2px dashed var(--border-color);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 180px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: transparent;
-}
-
-.add-widget-card:hover {
-  border-color: var(--accent-primary);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-/* Success message */
+/* ---- Status Messages ---- */
 .success-message {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid var(--accent-primary);
+  background: var(--accent-glow);
+  border: 1px solid rgba(63, 255, 139, 0.25);
   color: var(--accent-primary);
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-family: var(--font-body);
 }
 
-/* Error message */
 .error-message {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid var(--error);
+  background: rgba(255, 113, 108, 0.08);
+  border: 1px solid rgba(255, 113, 108, 0.2);
   color: var(--error);
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: 0.75rem;
+  font-family: var(--font-body);
 }
 
-/* Display mode toggle */
+html:not(.dark) .success-message {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+html:not(.dark) .error-message {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+/* ---- Mode Toggle (Pill selector) ---- */
 .mode-toggle {
   display: flex;
-  background: var(--bg-secondary);
-  border-radius: 8px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(8px);
+  border-radius: 0.75rem;
   padding: 4px;
   gap: 4px;
+  border: 1px solid var(--surface-glass-border);
 }
 
 .mode-toggle button {
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: 0.625rem;
   border: none;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   font-size: 0.875rem;
+  font-family: var(--font-body);
   display: flex;
   align-items: center;
   gap: 0.375rem;
 }
 
 .mode-toggle button.active {
-  background: var(--accent-primary);
-  color: white;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  color: #005d2c;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+html:not(.dark) .mode-toggle button.active {
+  color: #ffffff;
 }
 
 .mode-toggle button:hover:not(.active) {
-  background: var(--bg-card);
+  background: var(--bg-card-secondary);
 }
 
-/* Provider Selector Styles */
+/* ---- Provider & Endpoint Cards ---- */
 .provider-selector {
   max-height: 400px;
   overflow-y: auto;
@@ -351,26 +392,27 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 1rem;
-  border-radius: 12px;
-  border: 2px solid var(--border-color);
-  background: var(--bg-secondary);
+  border-radius: 1.25rem;
+  border: 1px solid var(--surface-glass-border);
+  background: var(--surface-glass);
+  backdrop-filter: blur(8px);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   text-align: center;
 }
 
 .provider-card:hover {
   border-color: var(--accent-primary);
-  background: rgba(16, 185, 129, 0.05);
+  background: var(--accent-glow);
   transform: translateY(-2px);
 }
 
 .provider-card.selected {
   border-color: var(--accent-primary);
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--accent-glow);
+  box-shadow: 0 0 0 1px var(--accent-primary), 0 4px 16px var(--accent-glow);
 }
 
-/* Endpoint Selector Styles */
 .endpoint-selector {
   max-height: 400px;
   overflow-y: auto;
@@ -380,39 +422,43 @@ body {
   display: block;
   width: 100%;
   padding: 1rem;
-  border-radius: 12px;
-  border: 2px solid var(--border-color);
-  background: var(--bg-secondary);
+  border-radius: 1.25rem;
+  border: 1px solid var(--surface-glass-border);
+  background: var(--surface-glass);
+  backdrop-filter: blur(8px);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   text-align: left;
 }
 
 .endpoint-card:hover {
   border-color: var(--accent-primary);
-  background: rgba(16, 185, 129, 0.05);
+  background: var(--accent-glow);
+  transform: translateY(-1px);
 }
 
 .endpoint-card.selected {
   border-color: var(--accent-primary);
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--accent-glow);
+  box-shadow: 0 0 0 1px var(--accent-primary), 0 4px 16px var(--accent-glow);
 }
 
-/* Display mode badge */
+/* ---- Display Mode Badge ---- */
 .display-mode-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 0.5rem;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: var(--font-body);
   text-transform: capitalize;
 }
 
 .display-mode-badge.card {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(110, 155, 255, 0.1);
+  color: #6e9bff;
 }
 
 .display-mode-badge.table {
@@ -421,11 +467,16 @@ body {
 }
 
 .display-mode-badge.chart {
-  background: rgba(16, 185, 129, 0.1);
+  background: var(--accent-glow);
   color: var(--accent-primary);
 }
 
-/* Params Form Styles */
+html:not(.dark) .display-mode-badge.card {
+  background: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
+}
+
+/* ---- Params Form ---- */
 .params-form .param-input {
   margin-bottom: 1rem;
 }
@@ -434,22 +485,23 @@ body {
 .params-form input {
   width: 100%;
   padding: 0.625rem 0.875rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--surface-glass-border);
+  background: var(--surface-glass);
   color: var(--text-primary);
   font-size: 0.875rem;
-  transition: all 0.2s ease;
+  font-family: var(--font-body);
+  transition: all 0.3s ease;
 }
 
 .params-form select:focus,
 .params-form input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-/* Template card adjustments for new layout */
+/* ---- Template Grid ---- */
 .template-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -466,17 +518,18 @@ body {
   }
 }
 
-/* Provider Toggle Buttons */
+/* ---- Provider Toggle Buttons ---- */
 .provider-toggle-btn {
   padding: 0.5rem 1rem;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  border-radius: 0.625rem;
+  border: 1px solid var(--surface-glass-border);
+  background: var(--surface-glass);
   color: var(--text-secondary);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: var(--font-body);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .provider-toggle-btn:hover {
@@ -485,25 +538,31 @@ body {
 }
 
 .provider-toggle-btn.active {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border-color: transparent;
+  color: #005d2c;
+  box-shadow: 0 2px 12px var(--accent-glow);
 }
 
-/* Display Mode Buttons */
+html:not(.dark) .provider-toggle-btn.active {
+  color: #ffffff;
+}
+
+/* ---- Display Mode Buttons ---- */
 .display-mode-btn {
   display: flex;
   align-items: center;
   gap: 0.375rem;
   padding: 0.5rem 0.875rem;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  border-radius: 0.625rem;
+  border: 1px solid var(--surface-glass-border);
+  background: var(--surface-glass);
   color: var(--text-secondary);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: var(--font-body);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .display-mode-btn:hover {
@@ -512,7 +571,12 @@ body {
 }
 
 .display-mode-btn.active {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border-color: transparent;
+  color: #005d2c;
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+
+html:not(.dark) .display-mode-btn.active {
+  color: #ffffff;
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import Link from 'next/link';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { UserButton } from '@clerk/nextjs';
 
@@ -64,39 +65,83 @@ export default function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-40 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]/80 backdrop-blur-md">
-            <div className="flex items-center justify-between px-6 py-4">
+        <header
+            style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 40,
+                background: theme === 'dark' ? 'rgba(12, 14, 18, 0.7)' : 'rgba(255, 255, 255, 0.75)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                boxShadow: theme === 'dark' ? '0 4px 32px rgba(63, 255, 139, 0.03)' : '0 1px 3px rgba(0, 0, 0, 0.06)',
+            }}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.875rem 1.5rem' }}>
                 {/* Logo and Title */}
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-primary)]">
-                        <svg
-                            className="h-5 w-5 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                        </svg>
-                    </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <Link
+                        href="/"
+                        style={{
+                            fontFamily: 'var(--font-headline)',
+                            fontSize: '1.25rem',
+                            fontWeight: 900,
+                            color: 'var(--accent-primary)',
+                            letterSpacing: '-0.05em',
+                            textDecoration: 'none',
+                        }}
+                    >
+                        FinBoard
+                    </Link>
+                    <div
+                        style={{
+                            width: '1px',
+                            height: '1.5rem',
+                            background: 'var(--surface-glass-border)',
+                        }}
+                    />
                     <div>
-                        <h1 className="text-lg font-semibold text-[var(--text-primary)]">
-                            Finance Dashboard
-                        </h1>
-                        <p className="text-sm text-[var(--text-muted)]">
+                        <p style={{
+                            fontSize: '0.8125rem',
+                            color: 'var(--text-secondary)',
+                            fontFamily: 'var(--font-body)',
+                        }}>
                             {activeWidgets > 0
-                                ? `${activeWidgets} active widget${activeWidgets > 1 ? 's' : ''} • Real-time data`
-                                : 'Connect to APIs and build your custom dashboard'}
+                                ? `${activeWidgets} active widget${activeWidgets > 1 ? 's' : ''}`
+                                : 'Build your dashboard'}
                         </p>
                     </div>
+                    {activeWidgets > 0 && (
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.375rem',
+                            padding: '0.25rem 0.625rem',
+                            borderRadius: '9999px',
+                            background: 'var(--accent-glow)',
+                            border: '1px solid rgba(63, 255, 139, 0.15)',
+                        }}>
+                            <span style={{
+                                width: '0.375rem',
+                                height: '0.375rem',
+                                borderRadius: '50%',
+                                background: 'var(--accent-primary)',
+                                animation: 'pulse-glow 2s ease-in-out infinite',
+                                boxShadow: '0 0 6px var(--accent-primary)',
+                            }} />
+                            <span style={{
+                                fontSize: '0.6875rem',
+                                fontWeight: 600,
+                                color: 'var(--accent-primary)',
+                                fontFamily: 'var(--font-body)',
+                                textTransform: 'uppercase' as const,
+                                letterSpacing: '0.08em',
+                            }}>Live</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {/* Import Button */}
                     <input
                         ref={fileInputRef}
@@ -108,10 +153,30 @@ export default function Header() {
                     />
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border-color)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)]"
+                        style={{
+                            display: 'flex',
+                            height: '2.25rem',
+                            width: '2.25rem',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '0.625rem',
+                            border: '1px solid var(--surface-glass-border)',
+                            background: 'var(--surface-glass)',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                        }}
                         title="Import configuration"
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                            e.currentTarget.style.color = 'var(--accent-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--surface-glass-border)';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
                     >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg style={{ height: '1.125rem', width: '1.125rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
                     </button>
@@ -120,10 +185,33 @@ export default function Header() {
                     <button
                         onClick={handleExport}
                         disabled={widgets.length === 0}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border-color)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                            display: 'flex',
+                            height: '2.25rem',
+                            width: '2.25rem',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '0.625rem',
+                            border: '1px solid var(--surface-glass-border)',
+                            background: 'var(--surface-glass)',
+                            color: 'var(--text-secondary)',
+                            cursor: widgets.length === 0 ? 'not-allowed' : 'pointer',
+                            opacity: widgets.length === 0 ? 0.5 : 1,
+                            transition: 'all 0.3s ease',
+                        }}
                         title="Export configuration"
+                        onMouseEnter={(e) => {
+                            if (widgets.length > 0) {
+                                e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                e.currentTarget.style.color = 'var(--accent-primary)';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--surface-glass-border)';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
                     >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg style={{ height: '1.125rem', width: '1.125rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
                     </button>
@@ -131,11 +219,31 @@ export default function Header() {
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--border-color)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-card)] hover:text-[var(--text-primary)]"
+                        style={{
+                            display: 'flex',
+                            height: '2.25rem',
+                            width: '2.25rem',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '0.625rem',
+                            border: '1px solid var(--surface-glass-border)',
+                            background: 'var(--surface-glass)',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                        }}
                         title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                            e.currentTarget.style.color = 'var(--accent-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--surface-glass-border)';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
                     >
                         {theme === 'dark' ? (
-                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg style={{ height: '1.125rem', width: '1.125rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -144,7 +252,7 @@ export default function Header() {
                                 />
                             </svg>
                         ) : (
-                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg style={{ height: '1.125rem', width: '1.125rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -161,10 +269,11 @@ export default function Header() {
                     {/* Add Widget Button */}
                     <button
                         onClick={() => openModal()}
-                        className="btn-primary flex items-center gap-2"
+                        className="btn-primary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                     >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        <svg style={{ height: '1rem', width: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                         </svg>
                         Add Widget
                     </button>
