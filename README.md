@@ -172,9 +172,5 @@ Professional-grade interactive charts with two rendering engines:
 ### 🏆 Market Gainers
 Auto-populated lists of top market movers to spot opportunities at a glance.
 
----
 
 
-<p align="center">
-  Made with 🤍 by <a href="https://github.com/Akshay01070">Akshay</a>
-</p>
